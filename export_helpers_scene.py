@@ -30,32 +30,36 @@ class LLObjectMergeProperties(PropertyGroup):
             type=cls,
             )
 
-        cls.addobject = StringProperty()
+        cls.active_layers_only = BoolProperty(
+            name="Active Layers Only", 
+            description="Only show objects on active layers as addable", 
+            default=False)
           
         cls.armatures = CollectionProperty(
             type=LLExportObject,
             name="Armatures",
             description="Selected armatures for merging when exporting",
         )
-        cls.armatures_index = IntProperty()
+        cls.armatures_index = IntProperty(options={"HIDDEN"})
           
         cls.meshes = CollectionProperty(
             type=LLExportObject,
             name="Meshes",
             description="Selected meshes for merging when exporting",
         )
-        cls.meshes_index = IntProperty()
+
+        cls.meshes_index = IntProperty(options={"HIDDEN"})
 
         cls.initialized = BoolProperty(
             default=False,
             options={"HIDDEN"}
         )
 
-        cls.selectable_objects = CollectionProperty(
-            type=LLExportObject,
-            name="Selectable Objects",
-            options={"HIDDEN"}
-        )
+        # cls.selectable_objects = CollectionProperty(
+        #     type=LLExportObject,
+        #     name="Selectable Objects",
+        #     options={"HIDDEN"}
+        # )
 
     def rebuild_objects(self, scene, objtype):
         if objtype == "armature":
@@ -87,7 +91,7 @@ class LLObjectMergeProperties(PropertyGroup):
     def unregister(cls):
         import traceback
         try:
-            del bpy.types.Object.llexportmerge
+            del bpy.types.Scene.llexportmerge
         except: traceback.print_exc()
 
 class LLSceneMergeListActions(Operator):
@@ -115,16 +119,25 @@ class LLSceneMergeListActions(Operator):
         for obj in context.scene.objects:
             if obj.type == self.object_type:
                 can_add = True
-                if self.object_type == "ARMATURE":
-                    for objp in context.scene.llexportmerge.armatures:
-                        if obj == objp.obj:
-                            can_add = False
-                            break
-                elif self.object_type == "MESH": 
-                    for objp in context.scene.llexportmerge.meshes:
-                        if obj == objp.obj:
-                            can_add = False
-                            break
+
+                if context.scene.llexportmerge.active_layers_only:
+                    for i in range(20):
+                        if context.scene.layers[i]:
+                            if not obj.layers[i]:
+                                can_add = False
+                                break
+
+                if can_add:
+                    if self.object_type == "ARMATURE":
+                        for objp in context.scene.llexportmerge.armatures:
+                            if obj == objp.obj:
+                                can_add = False
+                                break
+                    elif self.object_type == "MESH": 
+                        for objp in context.scene.llexportmerge.meshes:
+                            if obj == objp.obj:
+                                can_add = False
+                                break
                 if can_add:
                     selectables.append((obj.name, obj.name, obj.name))
         return selectables
@@ -225,7 +238,7 @@ class LLSceneExportPanel(Panel):
     bl_context = "objectmode"
     bl_category = "Export"
     bl_label = "Export Settings"
-    bl_options = {'DEFAULT_CLOSED'}
+    #bl_options = {'DEFAULT_CLOSED'}
 
     bpy.types.WindowManager.llmergelist_visible = BoolProperty(name="Merging", default=False, description="Select objects to merge when exporting")
 
@@ -267,8 +280,10 @@ class LLSceneExportPanel(Panel):
         label = "Merging" if wm.llmergelist_visible else "Merging (Hidden)"
         col.prop(wm, "llmergelist_visible", text=label, toggle=True)
         if wm.llmergelist_visible:
-            self.draw_merge_list(context, col, scene.llexportmerge, "armatures", "armatures_index", "Armatures", "ARMATURE")
+            col.prop(scene.llexportmerge, "active_layers_only")
             col = self.layout.column()
+            self.draw_merge_list(context, col, scene.llexportmerge, "armatures", "armatures_index", "Armatures", "ARMATURE")
+            #col = self.layout.column()
             self.draw_merge_list(context, col, scene.llexportmerge, "meshes", "meshes_index", "Meshes", "MESH")
         return
 

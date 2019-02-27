@@ -87,8 +87,13 @@ class LLObjectExportProperties(PropertyGroup):
         layout.prop(self, "apply_transforms")
 
     def prepare(self, context, obj):
-        transform_option = self.apply_transforms
+        transform_option = obj.llexportprops.apply_transforms
         if self.apply_transforms != "DISABLED":
+            last_selected = getattr(bpy.context.scene.objects, "active", None)
+            bpy.context.scene.objects.active = obj
+            obj.select = True
+            bpy.ops.object.mode_set(mode="OBJECT")
+            print("[LLHelpers-Export] Applying transformations for {} ({})".format(obj.name, transform_option))
             if transform_option == "ALL":
                 bpy.ops.object.transform_apply(location = True, rotation = True, scale = True)
             elif transform_option == "LOCROT":
@@ -103,6 +108,9 @@ class LLObjectExportProperties(PropertyGroup):
                 bpy.ops.object.transform_apply(rotation = True)
             elif transform_option == "SCALE":
                 bpy.ops.object.transform_apply(scale = True)
+            bpy.context.scene.objects.active = last_selected
+            obj.select = False
+            #print("Applied rotation: " + obj.name + " : " + str(obj.rotation_euler))
         if self.export_name != "":
             obj["export_name"] = self.export_name
         elif self.original_name != "":
