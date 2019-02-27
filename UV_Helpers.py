@@ -1,8 +1,6 @@
 from __future__ import division
 import bpy
 import bmesh
-import os
-
 import math
 
 from bpy.types import Operator, PropertyGroup
