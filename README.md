@@ -11,15 +11,15 @@ Currently these helpers require an export addon to utilize them.
 
 ### Object Properties Panel
 The following properties work best when the exporter creates copies of objects (such as the [DOS2DE Collada Exporter](https://github.com/LaughingLeader-DOS2-Mods/DOS2DE-Collada-Exporter) in recent versions).
-# Apply Transformations
+#### Apply Transformations
 Applies the selected transformations when exporting.
-* Export Name
+#### Export Name
 The object takes on this name when exporting. Useful if you have multiple copies of the same object on various layers (possibly for different rigs), but want the exported mesh/etc name to be the same.
 
 ### Object Mode Toolshelf > Export
-* Merging (WIP)
+#### Merging (WIP)
 Allows merging of objects when exporting. Useful for keeping your actual objects separate, for easier tweaking without needing to make continuous duplicates/backups.
 
 ## UV Helpers
-* Check for unwrapped vertices
-Format that utilize q-tangents (gr2 for one) have issues when UVs don't form a triangle. This helper identifies and highlights those UVs for you.
+#### Check for unwrapped vertices
+Formats that utilize q-tangents (gr2 for one) have issues when UVs don't form a triangle. This helper identifies and highlights those UVs for you.
