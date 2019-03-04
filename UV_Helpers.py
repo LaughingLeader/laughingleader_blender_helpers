@@ -213,6 +213,92 @@ class UVUnwrappedChecker(Operator):
 
         return {'FINISHED'}            # Lets Blender know the operator finished successfully.
 
+def selectedUVs(mesh, bmesh=None, uvlayer=None, sync=False):
+    '''Get the vertices visible and selected in the UV view.'''
+    uvs = {}
+    if bmesh is None:
+        uvlayer = uvlayer or mesh.uv_layers.active
+        for f, uv in zip(mesh.loops, uvlayer.data):
+            #print("UVLayer: {} | f: {} uv: {}".format(uvlayer.name, f, uv))
+            if mesh.vertices[f.vertex_index].select and (sync or uv.select):
+                uvs[f.vertex_index] = uv.uv
+                #uvs.append(uv.uv)
+    else:
+        uv_layer = uvlayer or bmesh.loops.layers.uv.active
+
+        for face in bmesh.faces:
+            for loop in face.loops:
+                luv = loop[uv_layer]
+                if (luv.select or sync) and loop.vert.select:
+                    print(loop.index)
+                    uvs[loop.index] = luv
+                    #uvs.append(luv)
+    return uvs
+
+last_selected_uvs = []
+last_selection = None
+
+class UVSelectCursorHelper(Operator):
+    """Move the cursor to the last selected UV"""      # Use this as a tooltip for menu items and buttons.
+    bl_idname = "uvhelpers.3dcursortolastuv"        # Unique identifier for buttons and menu items to reference.
+    bl_label = "Cursor to Last UV"         # Display name in the interface.
+    bl_options = {'REGISTER', 'UNDO'}  # Enable undo for the operator.
+
+    @classmethod
+    def poll(cls, context):
+        return (context.mode == 'EDIT_MESH')
+
+    def execute(self, context):        # execute() is called when running the operator.
+
+        print("Looking for selected UVs...")
+
+        node = bpy.context.scene.objects.active
+
+        if node.type == "MESH":
+            if (node.data is not None):
+
+                mesh = node.data
+                bm = bmesh.from_edit_mesh(mesh)
+
+                selected = selectedUVs(mesh=mesh, bmesh=bm, sync=context.scene.tool_settings.use_uv_select_sync)
+                total = len(selected)
+                if len(selected) > 0:
+
+                    global last_selected_uvs
+                    global last_selection
+
+                    selection = 0
+                    for key in selected.keys():
+                        selection += key
+                    
+                    if selection == last_selection:
+                        last_total = len(last_selected_uvs)
+                        if last_total == total:
+                            last = last_selected_uvs[-1]
+                            last_selected_uvs.clear()
+                            last_selected_uvs.append(last)
+                    else:
+                        last_selected_uvs.clear()
+
+                    for i, uvdata in selected.items():
+                        if not i in last_selected_uvs:
+                            bpy.ops.uv.cursor_set(location=uvdata.uv)
+                            last_selected_uvs.append(i)
+                            break
+
+                    last_selection = selection
+                
+                # uv_layer = bm.loops.layers.uv.active
+                # for f in bm.faces:
+                #     for l in f.loops:
+                #         luv = l[uv_layer]
+                #         if luv.select:
+                #             bpy.ops.uv.cursor_set(location=luv.uv)
+                #             print(luv.uv)
+                #             break
+
+        return {'FINISHED'}            # Lets Blender know the operator finished successfully.
+
 
 class UVHelperPanel(bpy.types.Panel):
     bl_label = "Helpers"
@@ -228,13 +314,19 @@ class UVHelperPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         layout.operator(UVUnwrappedChecker.bl_idname)
+        layout.operator(UVSelectCursorHelper.bl_idname)
+
+def draw_snap_addon(self, context):
+    self.layout.operator(UVSelectCursorHelper.bl_idname, icon="PLUGIN")
 
 def register():
     #bpy.utils.register_module(__name__)
+    bpy.types.IMAGE_MT_uvs_snap.append(draw_snap_addon)
     return
 
 def unregister():
     #bpy.utils.unregister_module(__name__)
+    bpy.types.IMAGE_MT_uvs_snap.remove(draw_snap_addon)
     return
 
 if __name__ == "__main__":
