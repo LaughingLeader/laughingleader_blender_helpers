@@ -186,6 +186,14 @@ def check_init_data(scene):
                     obj.llexportprops.export_name = obj.name
                 obj.llexportprops.initialized = True
         first_init = False
+    
+    if scene.objects.active is not None:
+        obj = scene.objects.active
+        if obj.llexportprops.initialized == False:
+                obj.llexportprops.original_name = obj.name
+                if obj.llexportprops.export_name == "__DEFAULT__":
+                    obj.llexportprops.export_name = obj.name
+                obj.llexportprops.initialized = True
 
 def register():
     bpy.app.handlers.scene_update_post.append(check_init_data)
