@@ -111,12 +111,16 @@ class LLObjectExportProperties(PropertyGroup):
             bpy.context.scene.objects.active = last_selected
             obj.select = False
             #print("Applied rotation: " + obj.name + " : " + str(obj.rotation_euler))
-        if self.export_name != "":
-            obj["export_name"] = self.export_name
-        elif self.original_name != "":
-            obj["export_name"] = self.original_name
-        else:
+
+        if self.export_name == "__DEFAULT__":
             obj["export_name"] = obj.name
+        else:
+            if self.export_name != "":
+                obj["export_name"] = self.export_name
+            elif self.original_name != "":
+                obj["export_name"] = self.original_name
+            else:
+                obj["export_name"] = obj.name
     @classmethod
     def unregister(cls):
         try:
@@ -160,7 +164,8 @@ class LLObjectPropertiesExportPanel(Panel):
             col.label("DOS2DE Collada Settings")
             import io_scene_dos2de
             col.operator(io_scene_dos2de.DOS2DEExtraFlagsOperator.bl_idname)
-            
+        else:
+            print("DOS2DE Collada Addon not found.")
         return
 
     def execute(self, context, event):

@@ -105,7 +105,7 @@ def unregister():
 
     print("Unregistered {}".format(bl_info["name"]))
 
-print("__init__.py running? {}".format(__name__))
+#print("__init__.py running? {}".format(__name__))
 
 if __name__ == "__main__":
     register()

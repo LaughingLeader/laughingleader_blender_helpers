@@ -650,7 +650,7 @@ def unregister():
     #bpy.utils.unregister_module(__name__)
     print("Unregistered layer_manager.py?")
 
-print("layer_manager.py running? {}".format(__name__))
+#print("layer_manager.py running? {}".format(__name__))
 
 if __name__ == "__main__":
     print("layer_manager.py name is __main__? {}".format(__name__))
