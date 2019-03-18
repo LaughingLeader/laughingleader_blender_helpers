@@ -138,7 +138,7 @@ class LLObjectPropertiesExportPanel(Panel):
 
     def addon_is_enabled(self, context, addon_name):
         if addon_name in addon_utils.addons_fake_modules:
-            default, state = addon_utils.check(addon_name)
+            default,state = addon_utils.check(addon_name)
             if state:
                 return True
         return False
