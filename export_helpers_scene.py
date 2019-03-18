@@ -38,15 +38,13 @@ class LLObjectMergeProperties(PropertyGroup):
         cls.armatures = CollectionProperty(
             type=LLExportObject,
             name="Armatures",
-            description="Selected armatures for merging when exporting"
-        )
+            description="Selected armatures for merging when exporting")
         cls.armatures_index = IntProperty(options={"HIDDEN"})
           
         cls.meshes = CollectionProperty(
             type=LLExportObject,
             name="Meshes",
-            description="Selected meshes for merging when exporting"
-        )
+            description="Selected meshes for merging when exporting")
 
         cls.meshes_index = IntProperty(options={"HIDDEN"})
 

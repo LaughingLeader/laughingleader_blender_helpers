@@ -65,6 +65,7 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
 
     from . import layer_manager
 
+    layer_manager_enabled = BoolProperty(default=True, name="Enable Layer Manager", update=layer_manager.enabled_changed)
     layer_manager_category = StringProperty(default="Layers", name="Layer Manager Panel Name", update=layer_manager.update_panel)
 
     def draw(self, context):
@@ -76,6 +77,7 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
         #         #drawfunc(drawable, context, self.layout)
         #         self.layout.prop
         layout = self.layout
+        layout.prop(self, "layer_manager_enabled")
         layout.prop(self, "layer_manager_category")
         return
 # register

@@ -50,6 +50,8 @@ from bpy.props import (
         )
 from bpy.app.handlers import persistent
 
+from . import LeaderHelpersAddonPreferences
+
 EDIT_MODES = {'EDIT_MESH', 'EDIT_CURVE', 'EDIT_SURFACE', 'EDIT_METABALL', 'EDIT_TEXT', 'EDIT_ARMATURE'}
 
 NUM_LAYERS = 20
@@ -604,25 +606,45 @@ panels = (
 
 def update_panel(self, context):
     message = "Layer Management: Updating Panel locations has failed"
-    from . import LeaderHelpersAddonPreferences
 
     id = LeaderHelpersAddonPreferences.bl_idname
 
     try:
+        enabled = context.user_preferences.addons[id].preferences.layer_manager_enabled is True
         for panel in panels:
             if "bl_rna" in panel.__dict__:
                 bpy.utils.unregister_class(panel)
 
-        for panel in panels:
-            panel.bl_category = context.user_preferences.addons[id].preferences.layer_manager_category
-            bpy.utils.register_class(panel)
+        if enabled:
+            for panel in panels:
+                panel.bl_category = context.user_preferences.addons[id].preferences.layer_manager_category
+                bpy.utils.register_class(panel)
 
     except Exception as e:
         print("\n[{}]\n{}\n\nError:\n{}".format(id, message, e))
         pass
 
+registered = False
+
 def register():
+    message = "Layer Manager: Error registering"
+    id = LeaderHelpersAddonPreferences.bl_idname
+
+    try:
+        enabled = bpy.context.user_preferences.addons[id].preferences.layer_manager_enabled is True
+        if enabled:
+            register_manual()
+        else:
+            unregister()           
+
+    except Exception as e:
+        print("\n[{}]\n{}\n\nError:\n{}".format(id, message, e))
+        pass
+
+def register_manual():
     #bpy.utils.register_module(__name__)
+
+    global registered
 
     #from . import LeaderHelpersAddonPreferences
 
@@ -636,21 +658,45 @@ def register():
     # Unused, but this is needed for the TemplateList to work...
     bpy.types.Scene.layergroups_index = IntProperty(default=-1)
     bpy.types.Scene.namedlayers = PointerProperty(type=NamedLayers)
+    registered = True
     print("Initialized UI layer manager")
     
     bpy.app.handlers.scene_update_post.append(check_init_data)
     update_panel(None, bpy.context)
 
 def unregister():
+    global registered
+    
+    for panel in panels:
+        if "bl_rna" in panel.__dict__:
+            bpy.utils.unregister_class(panel)
     if check_init_data in bpy.app.handlers.scene_update_post:
         bpy.app.handlers.scene_update_post.remove(check_init_data)
-    del bpy.types.Scene.layergroups
-    del bpy.types.Scene.layergroups_index
-    del bpy.types.Scene.namedlayers
+
+    if registered:
+        del bpy.types.Scene.layergroups
+        del bpy.types.Scene.layergroups_index
+        del bpy.types.Scene.namedlayers
+        print("Unregistered UI layer manager")
+    registered = False
     #bpy.utils.unregister_module(__name__)
-    print("Unregistered layer_manager.py?")
 
 #print("layer_manager.py running? {}".format(__name__))
+
+def enabled_changed(self, context):
+    message = "Layer Management: Error enabling/disabling"
+    id = LeaderHelpersAddonPreferences.bl_idname
+
+    try:
+        enabled = context.user_preferences.addons[id].preferences.layer_manager_enabled is True
+        if enabled:
+            register_manual()
+        else:
+            unregister()
+
+    except Exception as e:
+        print("\n[{}]\n{}\n\nError:\n{}".format(id, message, e))
+        pass
 
 if __name__ == "__main__":
     print("layer_manager.py name is __main__? {}".format(__name__))
