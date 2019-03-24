@@ -27,7 +27,10 @@ from bpy.props import (
         CollectionProperty,
         BoolVectorProperty,
         PointerProperty,
+        EnumProperty
         )
+
+import bpy_extras.keyconfig_utils
 
 # load and reload submodules
 ##################################
@@ -50,11 +53,20 @@ class LeaderAddonPreferencesData(bpy.types.PropertyGroup):
 
 class LeaderPreferencesList(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
-        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+        if self.layout_type in {"DEFAULT", "COMPACT"}:
             item.draw(context, layout)
-        elif self.layout_type in {'GRID'}:
-            layout.alignment = 'CENTER'
+        elif self.layout_type in {"GRID"}:
+            layout.alignment = "CENTER"
             layout.label(text="", icon_value=icon)
+
+shading_modes = (
+        ("BOUNDBOX", "Bounding Box", "Display the object’s local bounding boxes only"),
+        ("WIREFRAME", "Wireframe", "Display the object as wire edges"),
+        ("SOLID", "Solid", " Display the object solid, lit with default OpenGL lights"),
+        ("TEXTURED", "Textured", "Display the object solid, with a texture"),
+        ("MATERIAL", "Material", "Display objects solid, with GLSL material"),
+        ("RENDERED", "Rendered", "Display render preview")
+    )
 
 class LeaderHelpersAddonPreferences(AddonPreferences):
     bl_idname = __name__
@@ -68,6 +80,14 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
     layer_manager_enabled = BoolProperty(default=True, name="Enable Layer Manager", update=layer_manager.enabled_changed)
     layer_manager_category = StringProperty(default="Layers", name="Layer Manager Panel Name", update=layer_manager.update_panel)
 
+    viewport_shading_target = EnumProperty(
+        name="Viewport Shading Toggle Target",
+        items=shading_modes,
+        default=("MATERIAL")
+    )
+
+    viewport_shading_last = EnumProperty(default=("SOLID"), items=shading_modes, options={"HIDDEN"})
+
     def draw(self, context):
         #self.layout.template_list("LeaderPreferencesList", "", self, "preference_data", self, "index")
 
@@ -79,9 +99,75 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
         layout = self.layout
         layout.prop(self, "layer_manager_enabled")
         layout.prop(self, "layer_manager_category")
+        layout.separator()
+        layout.prop(self, "viewport_shading_target")
         return
+
+class LeaderToggleViewportShading(Operator):
+    """Print the list of active addons to the debug window"""
+    bl_idname = "llhelpers.op_toggle_viewport_shading"
+    bl_label = "Toggle Viewport Shading (Leader Helpers)"
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        return {"FINISHED"}
+    
+    def invoke(self, context, event):
+        try:
+            target = context.user_preferences.addons[LeaderHelpersAddonPreferences.bl_idname].preferences.viewport_shading_target
+            last = context.user_preferences.addons[LeaderHelpersAddonPreferences.bl_idname].preferences.viewport_shading_last
+            #Source: https://blender.stackexchange.com/a/17746
+            area = next(area for area in bpy.context.screen.areas if area.type == "VIEW_3D")
+            space = next(space for space in area.spaces if space.type == "VIEW_3D")
+
+            if space.viewport_shade != target:
+                context.user_preferences.addons[LeaderHelpersAddonPreferences.bl_idname].preferences.viewport_shading_last = space.viewport_shade
+                space.viewport_shade = target
+            else:
+                space.viewport_shade = last
+        except Exception as e:
+            print("Error setting viewport shading:\n{}".format(e))
+            pass
+        return {"FINISHED"}
+
 # register
 ##################################
+
+addon_keymaps = []
+#leader_keymap_category = ('Leader Helpers', 'EMPTY', 'WINDOW', [])
+
+def register_keymaps():
+    # This bit makes Leader Helpers visible in the UI
+    # if not leader_keymap_category in bpy_extras.keyconfig_utils.KM_HIERARCHY:
+    #     bpy_extras.keyconfig_utils.KM_HIERARCHY.append(leader_keymap_category)
+    #     bpy_extras.keyconfig_utils.KM_HIERARCHY.sort() # optional
+
+    wm = bpy.context.window_manager
+
+    km = wm.keyconfigs.default.keymaps.new('3D View', space_type='VIEW_3D', region_type='WINDOW', modal=False)
+
+    kmi = km.keymap_items.new(LeaderToggleViewportShading.bl_idname, type='X', value='PRESS', alt=True)
+    addon_keymaps.append((km, kmi))
+
+    print("[LeaderHelpers] Registered keybindings.")
+
+def unregister_keymaps():
+    # bpy_extras.keyconfig_utils.KM_HIERARCHY.remove(leader_keymap_category)
+    # for entry in bpy_extras.keyconfig_utils.KM_HIERARCHY:
+    #     idname, spaceid, regionid, children = entry
+    #     if idname == 'Leader Helpers':
+    #         bpy_extras.keyconfig_utils.KM_HIERARCHY.remove(entry)
+    
+    wm = bpy.context.window_manager
+    kc = wm.keyconfigs.default
+    if kc:
+        for km, kmi in addon_keymaps:
+            km.keymap_items.remove(kmi)
+    addon_keymaps.clear()
+    print("[LeaderHelpers] Unregistered keybindings.")
 
 import traceback
 
@@ -94,9 +180,16 @@ def register():
     for module in modules:
         register_func = getattr(module, "register", None)
         if callable(register_func):
+            print("Calling register() for {} ".format(module))
             register_func()
 
+    register_keymaps()
+
+    #wm = bpy.context.window_manager
+    #bpy_extras.keyconfig_utils.keyconfig_test(wm.keyconfigs.default)
+
 def unregister():
+    unregister_keymaps()
     for module in modules:
         unregister_func = getattr(module, "unregister", None)
         if callable(unregister_func):

@@ -50,8 +50,6 @@ from bpy.props import (
         )
 from bpy.app.handlers import persistent
 
-from . import LeaderHelpersAddonPreferences
-
 EDIT_MODES = {'EDIT_MESH', 'EDIT_CURVE', 'EDIT_SURFACE', 'EDIT_METABALL', 'EDIT_TEXT', 'EDIT_ARMATURE'}
 
 NUM_LAYERS = 20
@@ -606,7 +604,7 @@ panels = (
 
 def update_panel(self, context):
     message = "Layer Management: Updating Panel locations has failed"
-
+    from . import LeaderHelpersAddonPreferences
     id = LeaderHelpersAddonPreferences.bl_idname
 
     try:
@@ -628,6 +626,7 @@ registered = False
 
 def register():
     message = "Layer Manager: Error registering"
+    from . import LeaderHelpersAddonPreferences
     id = LeaderHelpersAddonPreferences.bl_idname
 
     try:
@@ -685,6 +684,7 @@ def unregister():
 
 def enabled_changed(self, context):
     message = "Layer Management: Error enabling/disabling"
+    from . import LeaderHelpersAddonPreferences
     id = LeaderHelpersAddonPreferences.bl_idname
 
     try:

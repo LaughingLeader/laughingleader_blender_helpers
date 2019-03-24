@@ -22,42 +22,44 @@ class LLExportObject(PropertyGroup):
     name = StringProperty(name="Name")
 
 class LLObjectMergeProperties(PropertyGroup):
+
+    active_layers_only = BoolProperty(
+            name="Active Layers Only", 
+            description="Only show objects on active layers as addable", 
+            default=False)
+          
+    armatures = CollectionProperty(
+            type=LLExportObject,
+            name="Armatures",
+            description="Selected armatures for merging when exporting")
+
+    armatures_index = IntProperty(options={"HIDDEN"})
+          
+    meshes = CollectionProperty(
+            type=LLExportObject,
+            name="Meshes",
+            description="Selected meshes for merging when exporting")
+
+    meshes_index = IntProperty(options={"HIDDEN"})
+
+    initialized = BoolProperty(
+        default=False,
+        options={"HIDDEN"}
+    )
+
+    # cls.selectable_objects = CollectionProperty(
+    #     type=LLExportObject,
+    #     name="Selectable Objects",
+    #     options={"HIDDEN"}
+    # )
+
     @classmethod
     def register(cls):
         bpy.types.Scene.llexportmerge = PointerProperty(
             name="Export Merge Objects",
             description="Objects to merge with when exporting",
             type=cls
-            )
-
-        cls.active_layers_only = BoolProperty(
-            name="Active Layers Only", 
-            description="Only show objects on active layers as addable", 
-            default=False)
-          
-        cls.armatures = CollectionProperty(
-            type=LLExportObject,
-            name="Armatures",
-            description="Selected armatures for merging when exporting")
-        cls.armatures_index = IntProperty(options={"HIDDEN"})
-          
-        cls.meshes = CollectionProperty(
-            type=LLExportObject,
-            name="Meshes",
-            description="Selected meshes for merging when exporting")
-
-        cls.meshes_index = IntProperty(options={"HIDDEN"})
-
-        cls.initialized = BoolProperty(
-            default=False,
-            options={"HIDDEN"}
         )
-
-        # cls.selectable_objects = CollectionProperty(
-        #     type=LLExportObject,
-        #     name="Selectable Objects",
-        #     options={"HIDDEN"}
-        # )
 
     def rebuild_objects(self, scene, objtype):
         if objtype == "armature":
