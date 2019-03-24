@@ -77,11 +77,12 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
 
     from . import layer_manager
 
-    layer_manager_enabled = BoolProperty(default=True, name="Enable Layer Manager", update=layer_manager.enabled_changed)
-    layer_manager_category = StringProperty(default="Layers", name="Layer Manager Panel Name", update=layer_manager.update_panel)
+    layer_manager_enabled = BoolProperty(default=True, name="Enable", description="Enable the Layer Manager", update=layer_manager.enabled_changed)
+    layer_manager_category = StringProperty(default="Layers", name="Panel Name", description="Display name to use for the Layer Manager Panel", update=layer_manager.update_panel)
 
     viewport_shading_target = EnumProperty(
-        name="Viewport Shading Toggle Target",
+        name="Toggle Viewport Shading Target",
+        description="The shading type to switch to when toggling the viewport shading",
         items=shading_modes,
         default=("MATERIAL")
     )
@@ -97,9 +98,10 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
         #         #drawfunc(drawable, context, self.layout)
         #         self.layout.prop
         layout = self.layout
-        layout.prop(self, "layer_manager_enabled")
-        layout.prop(self, "layer_manager_category")
-        layout.separator()
+        box = layout.box()
+        box.label(text="Layer Manager")
+        box.prop(self, "layer_manager_enabled")
+        box.prop(self, "layer_manager_category")
         layout.prop(self, "viewport_shading_target")
         return
 
