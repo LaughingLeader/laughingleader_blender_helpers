@@ -47,7 +47,7 @@ class LLObjectMergeProperties(PropertyGroup):
         options={"HIDDEN"}
     )
 
-    # cls.selectable_objects = CollectionProperty(
+    # selectable_objects = CollectionProperty(
     #     type=LLExportObject,
     #     name="Selectable Objects",
     #     options={"HIDDEN"}
@@ -96,7 +96,7 @@ class LLObjectMergeProperties(PropertyGroup):
 
 class LLSceneMergeListActions(Operator):
     bl_idname = "llhelpers.export_merge_listactions"
-    bl_label = "Add Object"
+    bl_label = "Add Object for Merging"
 
     object_type = EnumProperty(
         name="Target Object Type",
@@ -143,8 +143,14 @@ class LLSceneMergeListActions(Operator):
         return selectables
 
     add_object = EnumProperty(
-        items=get_selectables
+        items=get_selectables,
+        name="Object",
+        description="Add the selected object to the merge list"
     )
+
+    @classmethod
+    def poll(cls, context):
+        return True
 
     def execute(self, context):
         for obj in context.scene.objects:
