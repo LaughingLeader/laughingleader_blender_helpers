@@ -149,7 +149,7 @@ def register_keymaps():
 
     km = wm.keyconfigs.default.keymaps.new('3D View', space_type='VIEW_3D', region_type='WINDOW', modal=False)
 
-    kmi = km.keymap_items.new(LeaderToggleViewportShading.bl_idname, type='X', value='PRESS', alt=True)
+    kmi = km.keymap_items.new(LeaderToggleViewportShading.bl_idname, type='NONE', value='PRESS')
     addon_keymaps.append((km, kmi))
 
     print("[LeaderHelpers] Registered keybindings.")
