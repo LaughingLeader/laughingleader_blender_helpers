@@ -40,10 +40,10 @@ class UVErrorv2:
         self.loop3 = uvloop3
 
 class UVUnwrappedChecker(Operator):
-    """Check for unwrapped UVs that will cause tangent/binormal issues.\nThese are UVs from separate vertices that share the exact same UV coordinates for a face."""      # Use this as a tooltip for menu items and buttons.
-    bl_idname = "uvhelpers.unwrappedchecker"        # Unique identifier for buttons and menu items to reference.
-    bl_label = "Check for Unwrapped UVs"         # Display name in the interface.
-    bl_options = {'REGISTER', 'UNDO'}  # Enable undo for the operator.
+    """Check for UVs that will cause tangent/binormal issues.\nThese are UV faces that fail to form a mathematical triangle."""
+    bl_idname = "uvhelpers.unwrappedchecker"
+    bl_label = "Check UV Triangles"
+    bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(cls, context):
@@ -335,13 +335,14 @@ class UVHelperPanel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.label("UV Error Checker")
+        layout.label("UV Errors")
         box = layout.box()
         #layout.prop(self, "select_all")
         box.prop(context.user_preferences.addons[LeaderHelpersAddonPreferences.bl_idname].preferences, "uvhelpers_errorchecker_select_all")
         box.prop(context.user_preferences.addons[LeaderHelpersAddonPreferences.bl_idname].preferences, "uvhelpers_errorchecker_select_mode")
         uv_helper_op = box.operator(UVUnwrappedChecker.bl_idname)
 
+        layout.label("Misc")
         layout.operator(UVSelectCursorHelper.bl_idname)
 
 def draw_snap_addon(self, context):
