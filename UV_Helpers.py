@@ -4,7 +4,9 @@ import bmesh
 import math
 
 from bpy.types import Operator, PropertyGroup
-from bpy.props import CollectionProperty, PointerProperty
+from bpy.props import CollectionProperty, PointerProperty, BoolProperty
+
+from . import LeaderHelpersAddonPreferences
 
 bl_info = {
     "name": "UV Helpers",
@@ -92,17 +94,23 @@ class UVUnwrappedChecker(Operator):
                                 uv_errors.append(uv_error_entry)
 
                 total_errors = len(uv_errors)
+
                 if total_errors > 0:
+                    can_select = True
                     for uv_error in uv_errors:
                         print("[ERROR]: UV problem detected!")
                         print("  Vert1: (%f,%f,%f)" % uv_error.vert1.co[:])
                         print("  Vert2: (%f,%f,%f)" % uv_error.vert2.co[:])
                         print("  UV1: (%f,%f)" % uv_error.loop1.uv[:])
                         print("  UV2: (%f,%f)" % uv_error.loop2.uv[:])
-                        uv_error.vert1.select_set(True)
-                        uv_error.vert2.select_set(True)
-                        uv_error.loop1.select = True
-                        uv_error.loop2.select = True
+
+                        if can_select:
+                            uv_error.vert1.select_set(True)
+                            uv_error.vert2.select_set(True)
+                            uv_error.loop1.select = True
+                            uv_error.loop2.select = True
+                            if self.select_all == False:
+                                can_select = False
 
                     self.report({"WARNING"}, "[LL-UV-Helper] {} total problems found on UV map. Check selected vertices for wrapping issues.".format(total_errors))
                 else:
@@ -125,7 +133,14 @@ class UVUnwrappedChecker(Operator):
         if node.type == "MESH":
             if (node.data is not None):
 
-                bpy.context.tool_settings.mesh_select_mode = (True, False, False)
+                select_mode = context.user_preferences.addons[LeaderHelpersAddonPreferences.bl_idname].preferences.uvhelpers_errorchecker_select_mode
+
+                if select_mode == "FACE":
+                    bpy.context.tool_settings.mesh_select_mode = (False, False, True)
+                elif select_mode == "EDGE":
+                    bpy.context.tool_settings.mesh_select_mode = (False, True, False)
+                else:
+                    bpy.context.tool_settings.mesh_select_mode = (True, False, False)
                 #py.context.tool_settings.mesh_select_mode = (False, False, True)
 
                 mesh = node.data
@@ -173,6 +188,8 @@ class UVUnwrappedChecker(Operator):
                         
                 total_errors = len(uv_errors)
                 if total_errors > 0:
+                    can_select = True
+                    select_all = context.user_preferences.addons[LeaderHelpersAddonPreferences.bl_idname].preferences.uvhelpers_errorchecker_select_all is True
                     for uv_error in uv_errors:
                         print("[ERROR]: UV problem detected!")
                         print("  Vert1: (%f,%f,%f)" % uv_error.vert1.co[:])
@@ -181,12 +198,17 @@ class UVUnwrappedChecker(Operator):
                         print("  UV1: (%f,%f)" % uv_error.loop1.uv[:])
                         print("  UV2: (%f,%f)" % uv_error.loop2.uv[:])
                         print("  UV3: (%f,%f)" % uv_error.loop3.uv[:])
-                        uv_error.vert1.select_set(True)
-                        uv_error.vert2.select_set(True)
-                        uv_error.vert3.select_set(True)
-                        uv_error.loop1.select = True
-                        uv_error.loop2.select = True
-                        uv_error.loop3.select = True
+
+                        if can_select:
+                            uv_error.vert1.select_set(True)
+                            uv_error.vert2.select_set(True)
+                            uv_error.vert3.select_set(True)
+                            uv_error.loop1.select = True
+                            uv_error.loop2.select = True
+                            uv_error.loop3.select = True
+                            if select_all == False:
+                                can_select = False
+                                break
 
                     self.report({"WARNING"}, "[LL-UV-Helper] {} total problems found on UV map. Check selected vertices for wrapping issues.".format(total_errors))
                 else:
@@ -313,7 +335,13 @@ class UVHelperPanel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        layout.operator(UVUnwrappedChecker.bl_idname)
+        layout.label("UV Error Checker")
+        box = layout.box()
+        #layout.prop(self, "select_all")
+        box.prop(context.user_preferences.addons[LeaderHelpersAddonPreferences.bl_idname].preferences, "uvhelpers_errorchecker_select_all")
+        box.prop(context.user_preferences.addons[LeaderHelpersAddonPreferences.bl_idname].preferences, "uvhelpers_errorchecker_select_mode")
+        uv_helper_op = box.operator(UVUnwrappedChecker.bl_idname)
+
         layout.operator(UVSelectCursorHelper.bl_idname)
 
 def draw_snap_addon(self, context):

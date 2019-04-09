@@ -66,7 +66,13 @@ shading_modes = (
         ("TEXTURED", "Textured", "Display the object solid, with a texture"),
         ("MATERIAL", "Material", "Display objects solid, with GLSL material"),
         ("RENDERED", "Rendered", "Display render preview")
-    )
+)
+
+select_modes = (
+        ("FACE", "Face", ""),
+        ("EDGE", "Edge", ""),
+        ("VERTEX", "Vertex", "")
+)
 
 class LeaderHelpersAddonPreferences(AddonPreferences):
     bl_idname = __name__
@@ -88,6 +94,19 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
     )
 
     viewport_shading_last = EnumProperty(default=("SOLID"), items=shading_modes, options={"HIDDEN"})
+
+    uvhelpers_errorchecker_select_all = BoolProperty(
+            name="Select All Problems",
+            description="Select all problematic UVs. If disabled, will only select the first problem found",
+            default=False
+    )
+
+    uvhelpers_errorchecker_select_mode = EnumProperty(
+        name="Mode",
+        description="The selection mode to use when selecting bad UVs",
+        items=select_modes,
+        default=("VERTEX")
+    )
 
     def draw(self, context):
         #self.layout.template_list("LeaderPreferencesList", "", self, "preference_data", self, "index")
