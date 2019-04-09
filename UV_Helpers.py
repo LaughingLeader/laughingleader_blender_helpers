@@ -127,7 +127,7 @@ class UVUnwrappedChecker(Operator):
         
         check1 = float(s1 * t2 - s2 * t1)
 
-        return abs(check1) < 0.00001
+        return abs(check1) < 0.0000001
 
     def uv_checkforerrors_v2(self, context, node):
         if node.type == "MESH":
