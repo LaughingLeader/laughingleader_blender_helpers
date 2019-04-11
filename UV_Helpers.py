@@ -6,8 +6,6 @@ import math
 from bpy.types import Operator, PropertyGroup
 from bpy.props import CollectionProperty, PointerProperty, BoolProperty
 
-from . import LeaderHelpersAddonPreferences
-
 bl_info = {
     "name": "UV Helpers",
     "author": "LaughingLeader",
@@ -133,7 +131,7 @@ class UVUnwrappedChecker(Operator):
         if node.type == "MESH":
             if (node.data is not None):
 
-                select_mode = context.user_preferences.addons[LeaderHelpersAddonPreferences.bl_idname].preferences.uvhelpers_errorchecker_select_mode
+                select_mode = context.user_preferences.addons["laughingleader_blender_helpers"].preferences.uvhelpers_errorchecker_select_mode
 
                 if select_mode == "FACE":
                     bpy.context.tool_settings.mesh_select_mode = (False, False, True)
@@ -338,8 +336,8 @@ class UVHelperPanel(bpy.types.Panel):
         layout.label("UV Errors")
         box = layout.box()
         #layout.prop(self, "select_all")
-        box.prop(context.user_preferences.addons[LeaderHelpersAddonPreferences.bl_idname].preferences, "uvhelpers_errorchecker_select_all")
-        box.prop(context.user_preferences.addons[LeaderHelpersAddonPreferences.bl_idname].preferences, "uvhelpers_errorchecker_select_mode")
+        box.prop(context.user_preferences.addons["laughingleader_blender_helpers"].preferences, "uvhelpers_errorchecker_select_all")
+        box.prop(context.user_preferences.addons["laughingleader_blender_helpers"].preferences, "uvhelpers_errorchecker_select_mode")
         uv_helper_op = box.operator(UVUnwrappedChecker.bl_idname)
 
         layout.label("Misc")

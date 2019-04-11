@@ -41,7 +41,7 @@ importlib.reload(developer_utils)
 modules = developer_utils.setup_addon_modules(__path__, __name__, "bpy" in locals())
 
 class LeaderAddonPreferencesData(bpy.types.PropertyGroup):
-    bl_idname = ""
+    bl_idname = "leader_addonpreferencesdata"
 
     label = StringProperty()
     props = []

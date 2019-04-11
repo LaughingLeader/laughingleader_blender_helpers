@@ -89,10 +89,12 @@ class LLObjectMergeProperties(PropertyGroup):
 
     @classmethod
     def unregister(cls):
-        import traceback
+        #import traceback
         try:
             del bpy.types.Scene.llexportmerge
-        except: traceback.print_exc()
+        except:
+            #traceback.print_exc()
+            pass
 
 class LLSceneMergeListActions(Operator):
     bl_idname = "llhelpers.export_merge_listactions"
