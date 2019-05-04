@@ -156,16 +156,19 @@ class LLObjectPropertiesExportPanel(Panel):
         col.label(text="Export Actions")
         if hasattr(context.object, "llexportprops"):
             context.object.llexportprops.draw(col, context, context.object)
-        else:
-            print("Where's llexportprops?")
 
-        if(self.addon_is_enabled(context, "io_scene_dos2de")):
-            col = self.layout.column()
-            col.label("DOS2DE Collada Settings")
-            import io_scene_dos2de
-            col.operator(io_scene_dos2de.DOS2DEExtraFlagsOperator.bl_idname)
-        else:
-            print("DOS2DE Collada Addon not found.")
+        try:
+            if(self.addon_is_enabled(context, "io_scene_dos2de")):
+                col = self.layout.column()
+                col.label("DOS2DE Collada Settings")
+                import io_scene_dos2de
+                col.operator(io_scene_dos2de.DOS2DEExtraFlagsOperator.bl_idname)
+            else:
+                #print("DOS2DE Collada Addon not found.")
+                pass
+        except: 
+            pass
+
         return
 
     def execute(self, context, event):

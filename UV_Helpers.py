@@ -187,7 +187,7 @@ class UVUnwrappedChecker(Operator):
                 total_errors = len(uv_errors)
                 if total_errors > 0:
                     can_select = True
-                    select_all = context.user_preferences.addons[LeaderHelpersAddonPreferences.bl_idname].preferences.uvhelpers_errorchecker_select_all is True
+                    select_all = context.user_preferences.addons["laughingleader_blender_helpers"].preferences.uvhelpers_errorchecker_select_all is True
                     for uv_error in uv_errors:
                         print("[ERROR]: UV problem detected!")
                         print("  Vert1: (%f,%f,%f)" % uv_error.vert1.co[:])
