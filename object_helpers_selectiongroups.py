@@ -54,7 +54,6 @@ class LLObjectSelectionGroupProperties(PropertyGroup):
 
 class LLHelpers_UL_SelectionGroups(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        # assert(isinstance(item, bpy.types.VertexGroup))
         group = item
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
             layout.prop(group, "name", text="", emboss=False, icon_value=icon)
@@ -65,7 +64,7 @@ class LLHelpers_UL_SelectionGroups(UIList):
             layout.label(text="", icon_value=icon)
 
 class LLObjectSelectionGroup_AddOperator(bpy.types.Operator):
-    """Add a selection group"""
+    """Add a new selection group"""
     bl_idname = "llhelpers.selectiongroup_add"
     bl_label = "Add"
     bl_options = {'UNDO'}
@@ -94,7 +93,7 @@ class LLObjectSelectionGroup_AddOperator(bpy.types.Operator):
 
 
 class LLObjectSelectionGroup_RemoveOperator(bpy.types.Operator):
-    """Remove a selection group"""
+    """Remove the selected group"""
     bl_idname = "llhelpers.selectiongroup_remove"
     bl_label = "Remove"
     bl_options = {'UNDO'}
@@ -110,36 +109,53 @@ class LLObjectSelectionGroup_RemoveOperator(bpy.types.Operator):
         
         return {'FINISHED'}
 
-class LLObjectSelectionGroup_MoveOperator(bpy.types.Operator):
-    """Remove a selection group"""
-    bl_idname = "llhelpers.selectiongroup_move"
-    bl_label = "Move"
-
-    direction = EnumProperty(
-        items=(
-            ('UP', "Up", ""),
-            ('DOWN', "Down", "")))
+class LLObjectSelectionGroup_MoveOperatorBase(bpy.types.Operator):
+    bl_idname = "llhelpers.selectiongroup_movebase"
+    bl_label = ""
+    direction = ""
     
     @classmethod
     def poll(cls, context):
         obj = context.object
-        return (obj and obj.type in {'MESH', 'LATTICE'} and len(obj.llselectiongroups.groups) > 0)
+        if (obj and obj.type in {'MESH', 'LATTICE'} and len(obj.llselectiongroups.groups) > 0):
+            #print("Index:{} Direction: {}".format(obj.llselectiongroups.active_index, cls.direction.get()))
+            if cls.direction == "UP" and obj.llselectiongroups.active_index > 0:
+                return True
+            elif cls.direction == "DOWN" and obj.llselectiongroups.active_index < len(obj.llselectiongroups.groups) - 1:
+                return True
+        return False
 
     def execute(self, context):
         obj = context.object
-        index = obj.llselectiongroups.groups.active_index
+        index = obj.llselectiongroups.active_index
+        target_index = index
         groups = obj.llselectiongroups.groups
-        if self.action == 'DOWN' and index < len(groups - 1):
-            groups.move(index, index+1)
-        elif self.action == 'UP' and index >= 1:
-            groups.move(index, index-1)
+        if self.direction == 'DOWN' and index < len(groups) - 1:
+            target_index = index+1
+            groups.move(index, target_index)
+        elif self.direction == 'UP' and index >= 1:
+            target_index = index-1
+            groups.move(index, target_index)
         
+        obj.llselectiongroups.active_index = target_index
+
         return {'FINISHED'}
+
+class LLObjectSelectionGroup_MoveUpOperator(LLObjectSelectionGroup_MoveOperatorBase, bpy.types.Operator):
+    """Move the selected group up"""
+    bl_idname = "llhelpers.selectiongroup_moveup"
+    bl_label = "Move Up"
+    direction = "UP"
+
+class LLObjectSelectionGroup_MoveDownOperator(LLObjectSelectionGroup_MoveOperatorBase, bpy.types.Operator):
+    """Move the selected group down"""
+    bl_idname = "llhelpers.selectiongroup_movedown"
+    bl_label = "Move Down"
+    direction = "DOWN"
 
 class LLObjectSelectionGroup_AssignOperatorBase(bpy.types.Operator):
     bl_idname = "llhelpers.selectiongroup_assignbase"
     bl_label = ""
-
     mode = ""
 
     @classmethod
@@ -164,10 +180,8 @@ class LLObjectSelectionGroup_AssignOperatorBase(bpy.types.Operator):
         group_data = (bm.verts.layers.int.get(group.group_id) or bm.verts.layers.int.new(group.group_id))
         
         for v in bm.verts:
-            if self.mode == "ADD":
-                v[group_data] = 1 if v.select else 0
-            else:
-                v[group_data] = 0
+            if v.select:
+                v[group_data] = 1 if self.mode == "ADD" else 0
 
         bmesh.update_edit_mesh(obj.data)
 
@@ -180,7 +194,7 @@ class LLObjectSelectionGroup_AssignOperator(LLObjectSelectionGroup_AssignOperato
     mode = "ADD"
 
 class LLObjectSelectionGroup_UnAssignOperator(LLObjectSelectionGroup_AssignOperatorBase, bpy.types.Operator):
-    """Assign selected vertices to the group"""
+    """Unassign selected vertices in group"""
     bl_idname = "llhelpers.selectiongroup_unssign"
     bl_label = "Remove"
     mode = "REMOVE"
@@ -256,8 +270,8 @@ class LLObjectSelectionGroups_Panel(bpy.types.Panel):
         #col.menu("MESH_MT_vertex_group_specials", icon='DOWNARROW_HLT', text="")
         if group:
             col.separator()
-            col.operator(LLObjectSelectionGroup_MoveOperator.bl_idname, icon='TRIA_UP', text="").direction = 'UP'
-            col.operator(LLObjectSelectionGroup_MoveOperator.bl_idname, icon='TRIA_DOWN', text="").direction = 'DOWN'
+            col.operator(LLObjectSelectionGroup_MoveUpOperator.bl_idname, icon='TRIA_UP', text="")
+            col.operator(LLObjectSelectionGroup_MoveDownOperator.bl_idname, icon='TRIA_DOWN', text="")
 
         if ob.llselectiongroups and (ob.mode == 'EDIT' and ob.type == 'MESH'):
             row = layout.row()
