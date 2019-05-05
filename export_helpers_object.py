@@ -129,7 +129,7 @@ class LLObjectExportProperties(PropertyGroup):
 
 class LLObjectPropertiesExportPanel(Panel):
     bl_label = "Export Settings"
-    bl_idname = "OBJECT_PT_export_settings"
+    bl_idname = "OBJECT_PT_llhelpers_export_settings"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "object"

@@ -38,7 +38,7 @@ class UVErrorv2:
         self.loop3 = uvloop3
 
 class UVUnwrappedChecker(Operator):
-    """Check for UVs that will cause tangent/binormal issues.\nThese are UV faces that fail to form a mathematical triangle."""
+    """Check for UVs that will cause tangent/binormal issues.\nThese are UV faces that fail to form a mathematical triangle"""
     bl_idname = "uvhelpers.unwrappedchecker"
     bl_label = "Check UV Triangles"
     bl_options = {'REGISTER', 'UNDO'}
@@ -319,6 +319,107 @@ class UVSelectCursorHelper(Operator):
 
         return {'FINISHED'}            # Lets Blender know the operator finished successfully.
 
+class UVSharpSelector(Operator):
+    """Selects all seams"""
+    bl_idname = "uvhelpers.sharpselecter"
+    bl_label = "Select Sharps Edges"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return (context.mode == 'EDIT_MESH')
+
+    def execute(self, context):
+        scene = context.scene
+
+        if context.object is None:
+            self.report({"WARNING"}, "[LL-UV-Helper] No object selected!")
+            return {'FINISHED'}
+
+        node = bpy.context.scene.objects.active
+
+        bpy.ops.object.mode_set(mode="EDIT")
+        if node.type == "MESH":
+            if (node.data is not None):
+                mesh = node.data
+
+                bm = bmesh.from_edit_mesh(mesh)
+                for edge in bm.edges:
+                    if edge.smooth == False:
+                        if bm.select_mode == "VERT":
+                            for v in edge.verts:
+                                v.select = True
+                        else:
+                            edge.select = True
+                bmesh.update_edit_mesh(mesh)
+
+        return {'FINISHED'}
+
+class UVSeamSelector(Operator):
+    """Selects all seams"""
+    bl_idname = "uvhelpers.seamselecter"
+    bl_label = "Select Seams"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return (context.mode == 'EDIT_MESH')
+
+    def execute(self, context):
+        scene = context.scene
+
+        if bpy.context.scene.objects.active is None:
+            self.report({"WARNING"}, "[LL-UV-Helper] Select a mesh before selecting seams!")
+            return {'FINISHED'}
+
+        node = bpy.context.scene.objects.active
+
+        bpy.ops.object.mode_set(mode="EDIT")
+        if node.type == "MESH":
+            if (node.data is not None):
+                mesh = node.data
+
+                bm = bmesh.from_edit_mesh(mesh)
+                for edge in bm.edges:
+                    #edge.select_set(False)
+                    if edge.seam:
+                        if bm.select_mode == "VERT":
+                            for v in edge.verts:
+                                v.select = True
+                        else:
+                            edge.select = True
+
+                #bm.select_flush(False)
+                bmesh.update_edit_mesh(mesh)
+
+        return {'FINISHED'}
+
+class UVImageReloader(Operator):
+    """Reloads all images from their source"""
+    bl_idname = "uvhelpers.reloadimages"
+    bl_label = "Reload All Images"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        import os
+
+        updated_image = False
+        for image in context.blend_data.images:
+            if image.filepath != "":
+                path_check = bpy.path.abspath(image.filepath, library=image.library)
+                if os.path.exists(path_check):
+                    image.reload()
+                    print("[LL-UV-Helper] Reloaded image: \"{}\"".format(path_check))
+                    updated_image = True
+                else:
+                    print("[LL-UV-Helper] Skipped reloading image (file does not exist): \"{}\"".format(path_check))
+
+        if updated_image:
+            for area in bpy.context.screen.areas:
+                if area.type in ['IMAGE_EDITOR']:
+                    area.tag_redraw()
+
+        return {'FINISHED'}            # Lets Blender know the operator finished successfully.
 
 class UVHelperPanel(bpy.types.Panel):
     bl_label = "Helpers"
@@ -342,6 +443,9 @@ class UVHelperPanel(bpy.types.Panel):
 
         layout.label("Misc")
         layout.operator(UVSelectCursorHelper.bl_idname)
+        layout.operator(UVSeamSelector.bl_idname)
+        layout.operator(UVSharpSelector.bl_idname)
+        layout.operator(UVImageReloader.bl_idname)
 
 def draw_snap_addon(self, context):
     self.layout.operator(UVSelectCursorHelper.bl_idname, icon="PLUGIN")
