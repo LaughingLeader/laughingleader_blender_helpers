@@ -125,7 +125,7 @@ class LLObjectExportProperties(PropertyGroup):
     def unregister(cls):
         try:
             del bpy.types.Object.llexportprops
-        except: traceback.print_exc()
+        except: pass
 
 class LLObjectPropertiesExportPanel(Panel):
     bl_label = "Export Settings"

@@ -79,11 +79,10 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
 
     addon_preferences_list = []
 
-    #def layer_manager_categyory_updated(self, context):
-
     from . import layer_manager
 
     layer_manager_enabled = BoolProperty(default=True, name="Enable", description="Enable the Layer Manager", update=layer_manager.enabled_changed)
+    #layer_manager_default_showextras = BoolProperty(default=False, name="Show Extras by Default", description="Show the extra options for layers by default. This can be overwritten in the Layer Manager panel")
     layer_manager_category = StringProperty(default="Layers", name="Panel Name", description="Display name to use for the Layer Manager Panel", update=layer_manager.update_panel)
 
     viewport_shading_target = EnumProperty(
@@ -117,10 +116,12 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
         #         #drawfunc(drawable, context, self.layout)
         #         self.layout.prop
         layout = self.layout
+        layout.label("Layer Manager")
         box = layout.box()
         box.label(text="Layer Manager")
         box.prop(self, "layer_manager_enabled")
         box.prop(self, "layer_manager_category")
+        box.prop(self, "layer_manager_default_showextras")
         layout.prop(self, "viewport_shading_target")
         return
 
@@ -150,7 +151,7 @@ class LeaderToggleViewportShading(Operator):
             else:
                 space.viewport_shade = last
         except Exception as e:
-            print("Error setting viewport shading:\n{}".format(e))
+            print("[LeaderHelpers] Error setting viewport shading:\n{}".format(e))
             pass
         return {"FINISHED"}
 
@@ -196,12 +197,12 @@ def register():
     try: bpy.utils.register_module(__name__)
     except: traceback.print_exc()
 
-    print("Registered {} with {} modules".format(bl_info["name"], len(modules)))
+    print("[LeaderHelpers] Registered {} with {} modules".format(bl_info["name"], len(modules)))
     
     for module in modules:
         register_func = getattr(module, "register", None)
         if callable(register_func):
-            print("Calling register() for {} ".format(module))
+            #print("[LeaderHelpers] Calling register() for {} ".format(module))
             register_func()
 
     register_keymaps()

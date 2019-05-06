@@ -84,7 +84,7 @@ class NamedLayers(PropertyGroup):
             )
     use_extra_options = BoolProperty(
             name="Show Extra Options",
-            default=True
+            default=False
             )
     use_layer_indices = BoolProperty(
             name="Show Layer Indices",
@@ -96,11 +96,9 @@ class NamedLayers(PropertyGroup):
             description="Use a classic layer selection visibility"
             )
     use_init = BoolProperty(
-            default=True,
-            options={'HIDDEN'}
-            )
-
-
+        default=True,
+        options={'HIDDEN'}
+    )
 # Stupid, but only solution currently is to use a handler to init that layers collection...
 @persistent
 def check_init_data(scene):
@@ -112,7 +110,6 @@ def check_init_data(scene):
             layer = namedlayers.layers.add()
             layer.name = "Layer%.2d" % (i + 1)  # Blender use layer nums starting from 1, not 0.
         namedlayers.use_init = False
-
 
 class LayerGroup(PropertyGroup):
     use_toggle = BoolProperty(name="", default=False)
@@ -414,12 +411,12 @@ class SCENE_PT_namedlayer_layers(Panel):
     bl_region_type = 'TOOLS'
     bl_label = "Layer Management"
     bl_category = "Layers"
-    bl_context = "objectmode"
+    #bl_context = "objectmode"
 
     @classmethod
     def poll(self, context):
-        return ((getattr(context, "mode", 'EDIT_MESH') not in EDIT_MODES) and
-                (context.area.spaces.active.type == 'VIEW_3D'))
+        #return ((getattr(context, "mode", 'EDIT_MESH') not in EDIT_MODES) and (context.area.spaces.active.type == 'VIEW_3D'))
+        return True
 
     def draw(self, context):
         scene = context.scene
@@ -428,9 +425,10 @@ class SCENE_PT_namedlayer_layers(Panel):
         if namedlayers is None:
             print("[Error] namelayers property in scene is None?")
             return
+        
         view_3d = context.area.spaces.active
         actob = context.object
-        use_extra = namedlayers.use_extra_options
+        use_extra = namedlayers.use_extra_options and ((getattr(context, "mode", 'EDIT_MESH') not in EDIT_MODES) and (context.area.spaces.active.type == 'VIEW_3D'))
         use_hide = namedlayers.use_hide_empty_layers
         use_indices = namedlayers.use_layer_indices
         use_classic = namedlayers.use_classic
@@ -603,34 +601,27 @@ panels = (
 
 
 def update_panel(self, context):
-    message = "Layer Management: Updating Panel locations has failed"
-    from . import LeaderHelpersAddonPreferences
-    id = LeaderHelpersAddonPreferences.bl_idname
-
     try:
-        enabled = context.user_preferences.addons[id].preferences.layer_manager_enabled is True
+        enabled = context.user_preferences.addons["laughingleader_blender_helpers"].preferences.layer_manager_enabled is True
         for panel in panels:
             if "bl_rna" in panel.__dict__:
                 bpy.utils.unregister_class(panel)
 
         if enabled:
             for panel in panels:
-                panel.bl_category = context.user_preferences.addons[id].preferences.layer_manager_category
+                panel.bl_category = context.user_preferences.addons["laughingleader_blender_helpers"].preferences.layer_manager_category
                 bpy.utils.register_class(panel)
 
     except Exception as e:
-        print("\n[{}]\n{}\n\nError:\n{}".format(id, message, e))
+        print("[LeaderHelpers:LayerManager:update_panel] Error:\n{}".format(e))
         pass
 
 registered = False
 
 def register():
     message = "Layer Manager: Error registering"
-    from . import LeaderHelpersAddonPreferences
-    id = LeaderHelpersAddonPreferences.bl_idname
-
     try:
-        enabled = bpy.context.user_preferences.addons[id].preferences.layer_manager_enabled is True
+        enabled = bpy.context.user_preferences.addons["laughingleader_blender_helpers"].preferences.layer_manager_enabled is True
         if enabled:
             register_manual()
         else:
@@ -658,7 +649,7 @@ def register_manual():
     bpy.types.Scene.layergroups_index = IntProperty(default=-1)
     bpy.types.Scene.namedlayers = PointerProperty(type=NamedLayers)
     registered = True
-    print("Initialized UI layer manager")
+    print("[LeaderHelpers:LayerManager:register_manual] Initialized UI layer manager.")
     
     bpy.app.handlers.scene_update_post.append(check_init_data)
     update_panel(None, bpy.context)
@@ -676,26 +667,22 @@ def unregister():
         del bpy.types.Scene.layergroups
         del bpy.types.Scene.layergroups_index
         del bpy.types.Scene.namedlayers
-        print("Unregistered UI layer manager")
+        print("[LeaderHelpers:LayerManager:unregister] Unregistered UI layer manager.")
     registered = False
     #bpy.utils.unregister_module(__name__)
 
 #print("layer_manager.py running? {}".format(__name__))
 
 def enabled_changed(self, context):
-    message = "Layer Management: Error enabling/disabling"
-    from . import LeaderHelpersAddonPreferences
-    id = LeaderHelpersAddonPreferences.bl_idname
-
     try:
-        enabled = context.user_preferences.addons[id].preferences.layer_manager_enabled is True
+        enabled = context.user_preferences.addons["laughingleader_blender_helpers"].preferences.layer_manager_enabled is True
         if enabled:
             register_manual()
         else:
             unregister()
 
     except Exception as e:
-        print("\n[{}]\n{}\n\nError:\n{}".format(id, message, e))
+        print("[LeaderHelpers:LayerManager:check_init_data] Error enabling/disabling.\nError:\n{}".format(e))
         pass
 
 if __name__ == "__main__":
