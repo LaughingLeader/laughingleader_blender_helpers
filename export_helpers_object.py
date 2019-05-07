@@ -127,6 +127,23 @@ class LLObjectExportProperties(PropertyGroup):
             del bpy.types.Object.llexportprops
         except: pass
 
+class LLObjectExportAddonDrawHandler(PropertyGroup):
+    functions = []
+
+    count = IntProperty(
+        default=0,
+        name="Total Draw Functions",
+        description="The total number of draw functions for an object's export properties. These are added by other addons"
+    )
+
+    def add(self, draw_func):
+        self.functions.append(draw_func)
+        self.count += 1
+    
+    def init(self):
+        #self.functions.clear()
+        self.count = 0
+
 class LLObjectPropertiesExportPanel(Panel):
     bl_label = "Export Settings"
     bl_idname = "OBJECT_PT_llhelpers_export_settings"
@@ -137,12 +154,14 @@ class LLObjectPropertiesExportPanel(Panel):
     bpy.types.WindowManager.llmergelist_visible = BoolProperty(name="Merging", default=False, description="Select objects to merge when exporting")
 
     def addon_is_enabled(self, context, addon_name):
-        if addon_name in addon_utils.addons_fake_modules:
+        try:
             default,state = addon_utils.check(addon_name)
             if state:
                 return True
+        except:
+            pass
         return False
-
+ 
     @classmethod
     def poll(cls, context):
         return (context.object is not None)
@@ -158,17 +177,13 @@ class LLObjectPropertiesExportPanel(Panel):
             context.object.llexportprops.draw(col, context, context.object)
 
         try:
-            if(self.addon_is_enabled(context, "io_scene_dos2de")):
-                col = self.layout.column()
-                col.label("DOS2DE Collada Settings")
-                import io_scene_dos2de
-                col.operator(io_scene_dos2de.DOS2DEExtraFlagsOperator.bl_idname)
-            else:
-                #print("DOS2DE Collada Addon not found.")
-                pass
-        except: 
-            pass
-
+            #print("Total functions: {}".format(len(context.scene.llexport_object_drawhandler.functions)))
+            if len(context.scene.llexport_object_drawhandler.functions) > 0:
+                for draw_func in context.scene.llexport_object_drawhandler.functions:
+                    if callable(draw_func):
+                        draw_func(self, context)
+        except Exception as e:
+            print("[LeaderHelpers:ExportHelpers_Object:draw] Error calling draw function:\nError:\n{}".format(e))
         return
 
     def execute(self, context, event):
@@ -182,6 +197,7 @@ from bpy.app.handlers import persistent
 def check_init_data(scene):
     global first_init
     if first_init:
+        scene.llexport_object_drawhandler.init()
         for obj in scene.objects:
             if obj.llexportprops.initialized == False:
                 obj.llexportprops.original_name = obj.name
@@ -204,10 +220,14 @@ def check_init_data(scene):
                 obj.llexportprops.original_name = obj.name
 
 def register():
+    bpy.types.Scene.llexport_object_drawhandler = PointerProperty(type=LLObjectExportAddonDrawHandler)
     bpy.app.handlers.scene_update_post.append(check_init_data)
 
 def unregister():
     bpy.app.handlers.scene_update_post.remove(check_init_data)
+    try:
+        del bpy.types.Scene.llexport_object_drawhandler
+    except: pass
 
 if __name__ == "__main__":
     register()
