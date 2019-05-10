@@ -2,8 +2,10 @@ import bpy
 from bpy.types import Operator, AddonPreferences, PropertyGroup, UIList, Panel
 from bpy.props import StringProperty, BoolProperty, FloatProperty, EnumProperty, CollectionProperty, PointerProperty, IntProperty
 
+import re
+
 class LLPoseHelpers_MirrorOperator(Operator):
-    """Extrude each individual face separately along local normals"""
+    """"""
     bl_label = "Mirror Pose Movements on the X-Axis"
     bl_idname = "llhelpers.pose_mirroroperator"
 
@@ -29,39 +31,57 @@ def mirror_axis(self, context):
     if arm.llpose_mirror_x_axis:
         layout.operator(LLPoseHelpers_MirrorOperator.bl_idname)
 
-def mirror_side_match(bone, side):
-    side_check = "_{}_".format(side)
-    if side_check in bone.name:
-        return side_check
-    side_check = "_{}".format(side)
-    if side_check in bone.name:
-        return side_check
+def mirror_get_sideless_name(bone):
+    regex = r"(.*)(_+)((L|R))(_+)(.*)"
+    subst = "\\1\\6" # Strip out underscores and side indicators (_L_, _R_, etc)
+
+    result = re.sub(regex, subst, bone.name, 1, re.IGNORECASE)
+
+    if result:
+        return result
     return False
 
-def mirror_get_side(bone):
-    side = mirror_side_match(bone, "L")
-    if side is False:
-        side = mirror_side_match(bone, "R")
-        if side is not False:
-            return side
+def mirror_needed(bone, other_bone):
+    if other_bone.location != bone.location:
+        return True
+    elif other_bone.scale != bone.scale:
+        return True
+    elif other_bone.rotation_mode == bone.rotation_mode:
+        if bone.rotation_mode == "QUATERNION":
+            return other_bone.rotation_quaternion != bone.rotation_quaternion
+        elif bone.rotation_mode == "AXIS_ANGLE":
+            return other_bone.rotation_axis_angle != bone.rotation_axis_angle
         else:
-            return False
-    else:
-        return side
+            return other_bone.rotation_euler != bone.rotation_euler
+    return False
+
+def mirror_rotations(bone, other_bone):
+    if other_bone.rotation_mode == bone.rotation_mode:
+        if bone.rotation_mode == "QUATERNION":
+            other_bone.rotation_quaternion = bone.rotation_quaternion
+        elif bone.rotation_mode == "AXIS_ANGLE":
+            other_bone.rotation_axis_angle = bone.rotation_axis_angle
+        else:
+            other_bone.rotation_euler = bone.rotation_euler
+    return
 
 def mirror_bone(bone, obj, arm, scene):
-    side = mirror_get_side(bone)
-    if side is not False:
-        if "L" in side:
-            reverse_side = str.replace(side, "L", "R", 1)
-        else:
-            reverse_side = str.replace(side, "R", "L", 1)
-        reverse_name = str.replace(bone.name, side, reverse_side, 1)
-        other_bone_index = arm.bones.find(reverse_name)
-        if other_bone_index != -1:
-            other_bone = obj.pose.bones[reverse_name]
-            if other_bone is not None and other_bone.location != bone.location:
-                other_bone.location = bone.location
+    sideless_name = mirror_get_sideless_name(bone)
+    if sideless_name is not False:
+        reverse_name = ""
+        for other_bone in arm.bones:
+            if other_bone.name == bone.name:
+                continue
+            other_sideless_name = mirror_get_sideless_name(other_bone)
+            if sideless_name == other_sideless_name:
+                reverse_name = other_bone.name
+                break
+        if reverse_name != "":
+            other_pose_bone = obj.pose.bones[reverse_name]
+            if other_pose_bone is not None and mirror_needed(bone, other_pose_bone):
+                other_pose_bone.location = bone.location
+                mirror_rotations(bone, other_pose_bone)
+                other_pose_bone.scale = bone.scale
                 #print("Mirroring bone: {} {}|{}".format(other_bone.name, pose.location, other_pose.location))
                 scene.update()
 
@@ -90,9 +110,17 @@ def xaxis_mirror_changed(self, context):
         appended_update_func = False
         print("[LeaderHelpers:PoseHelpers:xaxis_mirror_changed] Removed mirror_axis_scene from bpy.app.handlers.scene_update_post.")
 
+def mirror_armature_init(scene):
+    bpy.app.handlers.scene_update_post.remove(mirror_armature_init)
+    if scene.objects is not None:
+        for arm in [obj for obj in scene.objects if obj.type == "ARMATURE"]:
+            if hasattr(arm.data, "llpose_mirror_x_axis"):
+                xaxis_mirror_changed(arm.data, bpy.context)
+
 def register():
     bpy.types.VIEW3D_PT_tools_posemode_options.append(render_pose_options)
-    bpy.types.Armature.llpose_mirror_x_axis = BoolProperty(name="Mirror X Axis", description="Mirror posing on similar bones along the x-axis", default=False, update=xaxis_mirror_changed)
+    bpy.types.Armature.llpose_mirror_x_axis = BoolProperty(name="Mirror X Axis", description="Mirror loc/rot/scale posing on opposite bones along the x-axis", default=False, update=xaxis_mirror_changed)
+    bpy.app.handlers.scene_update_post.append(mirror_armature_init)
 
 def unregister():
     try:
