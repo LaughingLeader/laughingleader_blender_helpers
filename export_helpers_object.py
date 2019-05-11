@@ -19,7 +19,7 @@ bl_info = {
     "category": "Properties"
 }
 
-class AddonDebugOperator(Operator):
+class LLExportHelpers_AddonDebugOperator(Operator):
     """Print the list of active addons to the debug window"""
     bl_idname = "llhelpers.export_addondebug"
     bl_label = "List Active Addons (Debug)"
@@ -37,7 +37,7 @@ class AddonDebugOperator(Operator):
         
         return {'FINISHED'}
 
-class LLObjectExportProperties(PropertyGroup):
+class LLExportHelpers_ObjectExportProperties(PropertyGroup):
     @classmethod
     def register(cls):
         bpy.types.Object.llexportprops = PointerProperty(
@@ -127,7 +127,7 @@ class LLObjectExportProperties(PropertyGroup):
             del bpy.types.Object.llexportprops
         except: pass
 
-class LLObjectExportAddonDrawHandler(PropertyGroup):
+class LLExportHelpers_AddonDrawHandler(PropertyGroup):
     functions = []
 
     count = IntProperty(
@@ -144,9 +144,9 @@ class LLObjectExportAddonDrawHandler(PropertyGroup):
         #self.functions.clear()
         self.count = 0
 
-class LLObjectPropertiesExportPanel(Panel):
+class LLExportHelpers_ObjectExportPropertiesPanel(Panel):
     bl_label = "Export Settings"
-    bl_idname = "OBJECT_PT_llhelpers_export_settings"
+    bl_idname = "llhelpers.export_objectpropertiespanel"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "object"
@@ -169,7 +169,7 @@ class LLObjectPropertiesExportPanel(Panel):
     def draw(self, context):
         col = self.layout.row()
         col.label(text="Debug")
-        col.operator(AddonDebugOperator.bl_idname)
+        col.operator(LLExportHelpers_AddonDebugOperator.bl_idname)
 
         col = self.layout.column()
         col.label(text="Export Actions")
@@ -220,7 +220,7 @@ def check_init_data(scene):
                 obj.llexportprops.original_name = obj.name
 
 def register():
-    bpy.types.Scene.llexport_object_drawhandler = PointerProperty(type=LLObjectExportAddonDrawHandler)
+    bpy.types.Scene.llexport_object_drawhandler = PointerProperty(type=LLExportHelpers_AddonDrawHandler)
     bpy.app.handlers.scene_update_post.append(check_init_data)
 
 def unregister():

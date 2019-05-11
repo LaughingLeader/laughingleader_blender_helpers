@@ -17,11 +17,11 @@ bl_info = {
     "category": "3D View"
 }
 
-class LLExportObject(PropertyGroup):
+class LLExportHelpers_ObjectMergeData(PropertyGroup):
     obj = PointerProperty(name="Object", type=bpy.types.Object, options={"HIDDEN"})
     name = StringProperty(name="Name")
 
-class LLObjectMergeProperties(PropertyGroup):
+class LLExportHelpers_ObjectMergeProperties(PropertyGroup):
 
     active_layers_only = BoolProperty(
             name="Active Layers Only", 
@@ -29,14 +29,14 @@ class LLObjectMergeProperties(PropertyGroup):
             default=False)
           
     armatures = CollectionProperty(
-            type=LLExportObject,
+            type=LLExportHelpers_ObjectMergeData,
             name="Armatures",
             description="Selected armatures for merging when exporting")
 
     armatures_index = IntProperty(options={"HIDDEN"})
           
     meshes = CollectionProperty(
-            type=LLExportObject,
+            type=LLExportHelpers_ObjectMergeData,
             name="Meshes",
             description="Selected meshes for merging when exporting")
 
@@ -48,7 +48,7 @@ class LLObjectMergeProperties(PropertyGroup):
     )
 
     # selectable_objects = CollectionProperty(
-    #     type=LLExportObject,
+    #     type=LLExportHelpers_ObjectMergeData,
     #     name="Selectable Objects",
     #     options={"HIDDEN"}
     # )
@@ -96,7 +96,7 @@ class LLObjectMergeProperties(PropertyGroup):
             #traceback.print_exc()
             pass
 
-class LLSceneMergeListActions(Operator):
+class LLExportHelpers_SceneMergeListActionsOperator(Operator):
     bl_idname = "llhelpers.export_merge_listactions"
     bl_label = "Add Object for Merging"
 
@@ -226,7 +226,7 @@ class LLSceneMergeListActions(Operator):
         self.layout.prop(self, "add_object")
         #self.layout.prop_search(context.scene.llexportmerge, "addobject", context.scene.llexportmerge, "selectable_objects")
 
-class LLMergeObjectList(UIList):
+class LLExportHelpers_MergeObjectList(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
             iconval = "OBJECT_DATA"
@@ -240,7 +240,7 @@ class LLMergeObjectList(UIList):
             layout.alignment = 'CENTER'
             layout.label(text="", icon_value=icon)
             
-class LLSceneExportPanel(Panel):
+class LLExportHelpers_ExportMergePanel(Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
     bl_context = "objectmode"
@@ -261,22 +261,22 @@ class LLSceneExportPanel(Panel):
 
         layout.label(text=label)
         row = layout.row()
-        row.template_list("LLMergeObjectList", "", data, objects_var, data, index_var, rows=rows, type="DEFAULT")
+        row.template_list("LLExportHelpers_MergeObjectList", "", data, objects_var, data, index_var, rows=rows, type="DEFAULT")
 
         col = row.column(align=True)
-        op = col.operator(LLSceneMergeListActions.bl_idname, icon='ZOOMIN', text="")
+        op = col.operator(LLExportHelpers_SceneMergeListActionsOperator.bl_idname, icon='ZOOMIN', text="")
         op.object_type = object_type
         op.action = "ADD"
-        op = col.operator(LLSceneMergeListActions.bl_idname, icon='ZOOMOUT', text="")
+        op = col.operator(LLExportHelpers_SceneMergeListActionsOperator.bl_idname, icon='ZOOMOUT', text="")
         op.object_type = object_type
         op.action = "REMOVE"
 
         if is_sortable:
             col.separator()
-            op = col.operator(LLSceneMergeListActions.bl_idname, icon='TRIA_UP', text="")
+            op = col.operator(LLExportHelpers_SceneMergeListActionsOperator.bl_idname, icon='TRIA_UP', text="")
             op.object_type = object_type
             op.action = "UP"
-            op = col.operator(LLSceneMergeListActions.bl_idname, icon='TRIA_DOWN', text="")
+            op = col.operator(LLExportHelpers_SceneMergeListActionsOperator.bl_idname, icon='TRIA_DOWN', text="")
             op.object_type = object_type
             op.action = "DOWN"
 

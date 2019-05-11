@@ -65,7 +65,7 @@ class LLHelpers_UL_SelectionGroups(UIList):
 
 class LLObjectSelectionGroup_AddOperator(bpy.types.Operator):
     """Add a new selection group"""
-    bl_idname = "llhelpers.selectiongroup_add"
+    bl_idname = "llhelpers.object_selectiongroup_add"
     bl_label = "Add"
     bl_options = {'UNDO'}
 
@@ -94,7 +94,7 @@ class LLObjectSelectionGroup_AddOperator(bpy.types.Operator):
 
 class LLObjectSelectionGroup_RemoveOperator(bpy.types.Operator):
     """Remove the selected group"""
-    bl_idname = "llhelpers.selectiongroup_remove"
+    bl_idname = "llhelpers.object_selectiongroup_remove"
     bl_label = "Remove"
     bl_options = {'UNDO'}
 
@@ -110,7 +110,7 @@ class LLObjectSelectionGroup_RemoveOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 class LLObjectSelectionGroup_MoveOperatorBase(bpy.types.Operator):
-    bl_idname = "llhelpers.selectiongroup_movebase"
+    bl_idname = "llhelpers.object_selectiongroup_movebase"
     bl_label = ""
     direction = ""
     
@@ -143,18 +143,18 @@ class LLObjectSelectionGroup_MoveOperatorBase(bpy.types.Operator):
 
 class LLObjectSelectionGroup_MoveUpOperator(LLObjectSelectionGroup_MoveOperatorBase, bpy.types.Operator):
     """Move the selected group up"""
-    bl_idname = "llhelpers.selectiongroup_moveup"
+    bl_idname = "llhelpers.object_selectiongroup_moveup"
     bl_label = "Move Up"
     direction = "UP"
 
 class LLObjectSelectionGroup_MoveDownOperator(LLObjectSelectionGroup_MoveOperatorBase, bpy.types.Operator):
     """Move the selected group down"""
-    bl_idname = "llhelpers.selectiongroup_movedown"
+    bl_idname = "llhelpers.object_selectiongroup_movedown"
     bl_label = "Move Down"
     direction = "DOWN"
 
 class LLObjectSelectionGroup_AssignOperatorBase(bpy.types.Operator):
-    bl_idname = "llhelpers.selectiongroup_assignbase"
+    bl_idname = "llhelpers.object_selectiongroup_assignbase"
     bl_label = ""
     mode = ""
 
@@ -189,18 +189,18 @@ class LLObjectSelectionGroup_AssignOperatorBase(bpy.types.Operator):
 
 class LLObjectSelectionGroup_AssignOperator(LLObjectSelectionGroup_AssignOperatorBase, bpy.types.Operator):
     """Assign selected vertices to the group"""
-    bl_idname = "llhelpers.selectiongroup_assign"
+    bl_idname = "llhelpers.object_selectiongroup_assign"
     bl_label = "Assign"
     mode = "ADD"
 
 class LLObjectSelectionGroup_UnAssignOperator(LLObjectSelectionGroup_AssignOperatorBase, bpy.types.Operator):
     """Unassign selected vertices in group"""
-    bl_idname = "llhelpers.selectiongroup_unssign"
+    bl_idname = "llhelpers.object_selectiongroup_unssign"
     bl_label = "Remove"
     mode = "REMOVE"
 
 class LLObjectSelectionGroup_BaseSelectOperator(bpy.types.Operator):
-    bl_idname = "llhelpers.selectiongroup_baseselect"
+    bl_idname = "llhelpers.object_selectiongroup_baseselect"
     bl_label = ""
     mode = ""
 
@@ -228,13 +228,13 @@ class LLObjectSelectionGroup_BaseSelectOperator(bpy.types.Operator):
     
 class LLObjectSelectionGroup_SelectOperator(LLObjectSelectionGroup_BaseSelectOperator, bpy.types.Operator):
     """Select vertices in the group"""
-    bl_idname = "llhelpers.selectiongroup_select"
+    bl_idname = "llhelpers.object_selectiongroup_select"
     bl_label = "Select"
     mode = "SELECT"
 
 class LLObjectSelectionGroup_DeselectOperator(LLObjectSelectionGroup_BaseSelectOperator, bpy.types.Operator):
     """Deselect vertices in the group"""
-    bl_idname = "llhelpers.selectiongroup_deselect"
+    bl_idname = "llhelpers.object_selectiongroup_deselect"
     bl_label = "Deselect"
     mode = "DESELECT"
 
