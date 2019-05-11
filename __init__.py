@@ -129,7 +129,7 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
         box = layout.box()
         box.prop(self, "layer_manager_enabled")
         box.prop(self, "layer_manager_category")
-        box.prop(self, "layer_manager_default_showextras")
+        #box.prop(self, "layer_manager_default_showextras")
         layout.prop(self, "viewport_shading_target")
         return
 
@@ -174,11 +174,9 @@ def register_keymaps():
     # if not leader_keymap_category in bpy_extras.keyconfig_utils.KM_HIERARCHY:
     #     bpy_extras.keyconfig_utils.KM_HIERARCHY.append(leader_keymap_category)
     #     bpy_extras.keyconfig_utils.KM_HIERARCHY.sort() # optional
-
     wm = bpy.context.window_manager
 
     km = wm.keyconfigs.default.keymaps.new('3D View', space_type='VIEW_3D', region_type='WINDOW', modal=False)
-
     kmi = km.keymap_items.new(LeaderToggleViewportShading.bl_idname, type='NONE', value='PRESS')
     addon_keymaps.append((km, kmi))
 
@@ -190,12 +188,13 @@ def unregister_keymaps():
     #     idname, spaceid, regionid, children = entry
     #     if idname == 'Leader Helpers':
     #         bpy_extras.keyconfig_utils.KM_HIERARCHY.remove(entry)
-    
     wm = bpy.context.window_manager
-    kc = wm.keyconfigs.default
-    if kc:
+    try:
         for km, kmi in addon_keymaps:
+            print("[LeaderHelpers] Removed keybinding '{}'('{}').".format(kmi.idname, kmi.name))
             km.keymap_items.remove(kmi)
+        #wm.keyconfigs.default.keymaps.remove(km)
+    except: pass
     addon_keymaps.clear()
     print("[LeaderHelpers] Unregistered keybindings.")
 
@@ -219,7 +218,6 @@ def register():
     #bpy_extras.keyconfig_utils.keyconfig_test(wm.keyconfigs.default)
 
 def unregister():
-    unregister_keymaps()
     for module in modules:
         unregister_func = getattr(module, "unregister", None)
         if callable(unregister_func):
@@ -228,6 +226,7 @@ def unregister():
     try: bpy.utils.unregister_module(__name__)
     except: traceback.print_exc()
 
+    unregister_keymaps()
     print("Unregistered {}".format(bl_info["name"]))
 
 #print("__init__.py running? {}".format(__name__))

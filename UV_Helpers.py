@@ -6,6 +6,8 @@ import math
 from bpy.types import Operator, PropertyGroup
 from bpy.props import CollectionProperty, PointerProperty, BoolProperty
 
+from bl_ui import space_image
+
 bl_info = {
     "name": "UV Helpers",
     "author": "LaughingLeader",
@@ -487,7 +489,6 @@ class LLUVHelpers_DeleteOperator(Operator):
         return self.execute(context)
 
 # Draw Overrides
-from space_image import MASK_MT_editor_menus
 
 def IMAGE_HT_header_draw(self, context):
     layout = self.layout
@@ -505,7 +506,7 @@ def IMAGE_HT_header_draw(self, context):
     row = layout.row(align=True)
     row.template_header()
 
-    MASK_MT_editor_menus.draw_collapsible(context, layout)
+    space_image.MASK_MT_editor_menus.draw_collapsible(context, layout)
 
     layout.template_ID(sima, "image", new="image.new", open="image.open")
     if not show_render:

@@ -2,6 +2,8 @@ import bpy
 from bpy.types import Operator, PropertyGroup, UIList, Panel
 from bpy.props import StringProperty, BoolProperty, FloatProperty, EnumProperty, CollectionProperty, PointerProperty, IntProperty
 
+from bl_ui import space_dopesheet
+
 def action_set():
     return (bpy.context.object is not None and
         bpy.context.object.animation_data is not None
@@ -49,8 +51,6 @@ class LLAnimHelpers_DeleteOperator(Operator):
     def invoke(self, context, _event):
         return self.execute(context)
 
-from space_dopesheet import dopesheet_filter
-
 #Override the default draw function, so we can add the delete button right after the action template
 def DOPESHEET_HT_header_draw(self, context):
     layout = self.layout
@@ -81,11 +81,11 @@ def DOPESHEET_HT_header_draw(self, context):
     layout.prop(st.dopesheet, "show_summary", text="Summary")
 
     if st.mode == 'DOPESHEET':
-        dopesheet_filter(layout, context)
+        space_dopesheet.dopesheet_filter(layout, context)
     elif st.mode == 'ACTION':
         # 'genericFiltersOnly' limits the options to only the relevant 'generic' subset of
         # filters which will work here and are useful (especially for character animation)
-        dopesheet_filter(layout, context, genericFiltersOnly=True)
+        space_dopesheet.dopesheet_filter(layout, context, genericFiltersOnly=True)
     elif st.mode == 'GPENCIL':
         row = layout.row(align=True)
         row.prop(st.dopesheet, "show_gpencil_3d_only", text="Active Only")
