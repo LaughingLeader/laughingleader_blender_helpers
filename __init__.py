@@ -79,6 +79,12 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
 
     addon_preferences_list = []
 
+    general_enable_deletion = BoolProperty(
+        name="Enable Delete Buttons",
+        description="Enable visibility of delete buttons for data (actions, textures, etc)",
+        default=False
+    )
+
     from . import layer_manager
 
     layer_manager_enabled = BoolProperty(default=True, name="Enable", description="Enable the Layer Manager", update=layer_manager.enabled_changed)
@@ -116,9 +122,11 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
         #         #drawfunc(drawable, context, self.layout)
         #         self.layout.prop
         layout = self.layout
+        layout.label("General")
+        box = layout.box()
+        box.prop(self, "general_enable_deletion")
         layout.label("Layer Manager")
         box = layout.box()
-        box.label(text="Layer Manager")
         box.prop(self, "layer_manager_enabled")
         box.prop(self, "layer_manager_category")
         box.prop(self, "layer_manager_default_showextras")

@@ -20,14 +20,14 @@ bl_info = {
     "category": "UV"
 }
 
-class UVError:
+class LLUVHelpers_TriangleError:
     def __init__(self, vert1, vert2, loop1, loop2):
         self.vert1 = vert1
         self.vert2 = vert2
         self.loop1 = loop1
         self.loop2 = loop2
 
-class UVErrorv2:
+class LLUVHelpers_TriangleErrorv2:
     def __init__(self, face, vert1, vert2, vert3, uvloop1, uvloop2, uvloop3):
         self.face = face
         self.vert1 = vert1
@@ -37,9 +37,9 @@ class UVErrorv2:
         self.loop2 = uvloop2
         self.loop3 = uvloop3
 
-class UVUnwrappedChecker(Operator):
+class LLUVHelpers_UnwrappedChecker(Operator):
     """Check for UVs that will cause tangent/binormal issues.\nThese are UV faces that fail to form a mathematical triangle"""
-    bl_idname = "uvhelpers.unwrappedchecker"
+    bl_idname = "llhelpers.uv_unwrappedchecker"
     bl_label = "Check UV Triangles"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -88,7 +88,7 @@ class UVUnwrappedChecker(Operator):
                             checkuv = checkuv_loop.uv
 
                             if self.uv_error(vert, vert2, uv, checkuv):
-                                uv_error_entry = UVError(vert, vert2, uv_loop, checkuv_loop)
+                                uv_error_entry = LLUVHelpers_TriangleError(vert, vert2, uv_loop, checkuv_loop)
                                 uv_errors.append(uv_error_entry)
 
                 total_errors = len(uv_errors)
@@ -181,7 +181,7 @@ class UVUnwrappedChecker(Operator):
                         #uv3 = vert3.co.xy
 
                         if self.uv_error_v2(uv1, uv2, uv3):
-                            uv_error_entry = UVErrorv2(face, vert1, vert2, vert3, uvloop1, uvloop2, uvloop3)
+                            uv_error_entry = LLUVHelpers_TriangleErrorv2(face, vert1, vert2, vert3, uvloop1, uvloop2, uvloop3)
                             uv_errors.append(uv_error_entry)
                         
                 total_errors = len(uv_errors)
@@ -217,9 +217,7 @@ class UVUnwrappedChecker(Operator):
                 bm.select_flush(True)
                 bmesh.update_edit_mesh(mesh)
 
-    def execute(self, context):        # execute() is called when running the operator.
-
-        # The original script
+    def execute(self, context):
         scene = context.scene
 
         if bpy.context.scene.objects.active is None:
@@ -231,7 +229,7 @@ class UVUnwrappedChecker(Operator):
         bpy.ops.object.mode_set(mode="EDIT")
         self.uv_checkforerrors_v2(context, node)
 
-        return {'FINISHED'}            # Lets Blender know the operator finished successfully.
+        return {'FINISHED'}
 
 def selectedUVs(mesh, bmesh=None, uvlayer=None, sync=False):
     '''Get the vertices visible and selected in the UV view.'''
@@ -258,9 +256,9 @@ def selectedUVs(mesh, bmesh=None, uvlayer=None, sync=False):
 last_selected_uvs = []
 last_selection = None
 
-class UVSelectCursorHelper(Operator):
+class LLUVHelpers_SelectCursorOperator(Operator):
     """Move the cursor to the last selected UV"""      # Use this as a tooltip for menu items and buttons.
-    bl_idname = "uvhelpers.3dcursortolastuv"        # Unique identifier for buttons and menu items to reference.
+    bl_idname = "llhelpers.uv_3dcursortolastuv"        # Unique identifier for buttons and menu items to reference.
     bl_label = "Cursor to Last UV"         # Display name in the interface.
     bl_options = {'REGISTER', 'UNDO'}  # Enable undo for the operator.
 
@@ -319,9 +317,9 @@ class UVSelectCursorHelper(Operator):
 
         return {'FINISHED'}            # Lets Blender know the operator finished successfully.
 
-class UVSharpSelector(Operator):
+class LLUVHelpers_SelectSharpOperator(Operator):
     """Selects all seams"""
-    bl_idname = "uvhelpers.sharpselecter"
+    bl_idname = "llhelpers.uv_sharpselecter"
     bl_label = "Select Sharps Edges"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -355,9 +353,9 @@ class UVSharpSelector(Operator):
 
         return {'FINISHED'}
 
-class UVSeamSelector(Operator):
+class LLUVHelpers_SelectSeamOperator(Operator):
     """Selects all seams"""
-    bl_idname = "uvhelpers.seamselecter"
+    bl_idname = "llhelpers.uv_seamselecter"
     bl_label = "Select Seams"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -394,9 +392,9 @@ class UVSeamSelector(Operator):
 
         return {'FINISHED'}
 
-class UVImageReloader(Operator):
+class LLUVHelpers_ImageReloaderOperator(Operator):
     """Reloads all images from their source"""
-    bl_idname = "uvhelpers.reloadimages"
+    bl_idname = "llhelpers.uv_reloadimages"
     bl_label = "Reload All Images"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -423,7 +421,7 @@ class UVImageReloader(Operator):
 
 class UVHelperPanel(bpy.types.Panel):
     bl_label = "Helpers"
-    bl_idname = "IMAGE_MT_ll_uvhelpers"
+    bl_idname = "llhelpers.uv_helperpanel"
     bl_space_type = 'IMAGE_EDITOR'
     bl_region_type = 'TOOLS'
     bl_category = 'Helpers'
@@ -439,25 +437,160 @@ class UVHelperPanel(bpy.types.Panel):
         #layout.prop(self, "select_all")
         box.prop(context.user_preferences.addons["laughingleader_blender_helpers"].preferences, "uvhelpers_errorchecker_select_all")
         box.prop(context.user_preferences.addons["laughingleader_blender_helpers"].preferences, "uvhelpers_errorchecker_select_mode")
-        uv_helper_op = box.operator(UVUnwrappedChecker.bl_idname)
+        uv_helper_op = box.operator(LLUVHelpers_UnwrappedChecker.bl_idname)
 
         layout.label("Misc")
-        layout.operator(UVSelectCursorHelper.bl_idname)
-        layout.operator(UVSeamSelector.bl_idname)
-        layout.operator(UVSharpSelector.bl_idname)
-        layout.operator(UVImageReloader.bl_idname)
+        layout.operator(LLUVHelpers_SelectCursorOperator.bl_idname)
+        layout.operator(LLUVHelpers_SelectSeamOperator.bl_idname)
+        layout.operator(LLUVHelpers_SelectSharpOperator.bl_idname)
+        layout.operator(LLUVHelpers_ImageReloaderOperator.bl_idname)
+
+class LLUVHelpers_DeleteOperator(Operator):
+    """Delete this image data"""
+    bl_label = "Delete Image"
+    bl_idname = "llhelpers.uv_imagedelete"
+    bl_options = {"UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.space_data.image != None
+
+    def execute(self, context):
+        ob = bpy.context.object
+        image_name = (context.space_data.image.name
+            if context.space_data.image is not None
+            else "")
+
+        msg = ""
+        msg_type = "INFO"
+
+        if image_name != "":
+            try:
+                index = bpy.data.images.find(image_name)
+                if index > -1:
+                    image = bpy.data.images[index]
+                    bpy.data.images.remove(image)
+                    msg = "[LeaderHelpers:UVHelpers:Delete] Deleted image '{}'. Undo to reverse.".format(image_name)
+                    context.scene.update()
+            except Exception as e:
+                msg = "[LeaderHelpers:UVHelpers:Delete] Error deleting image:\n\t{}".format(e)
+                msg_type = "ERROR"
+        else:
+            msg = "[LeaderHelpers:UVHelpers:Delete] Failed to find the current image."
+            msg_type = "WARNING"
+
+        if msg != "":
+            self.report({msg_type}, msg)
+        return {'FINISHED'}
+
+    def invoke(self, context, _event):
+        return self.execute(context)
+
+# Draw Overrides
+from space_image import MASK_MT_editor_menus
+
+def IMAGE_HT_header_draw(self, context):
+    layout = self.layout
+
+    sima = context.space_data
+    ima = sima.image
+    iuser = sima.image_user
+    toolsettings = context.tool_settings
+    mode = sima.mode
+
+    show_render = sima.show_render
+    show_uvedit = sima.show_uvedit
+    show_maskedit = sima.show_maskedit
+
+    row = layout.row(align=True)
+    row.template_header()
+
+    MASK_MT_editor_menus.draw_collapsible(context, layout)
+
+    layout.template_ID(sima, "image", new="image.new", open="image.open")
+    if not show_render:
+        layout.prop(sima, "use_image_pin", text="")
+
+    if bpy.context.user_preferences.addons["laughingleader_blender_helpers"].preferences.general_enable_deletion:
+        layout.operator(LLUVHelpers_DeleteOperator.bl_idname, icon="CANCEL", text="", emboss=False)
+
+    layout.prop(sima, "mode", text="")
+
+    if show_maskedit:
+        row = layout.row()
+        row.template_ID(sima, "mask", new="mask.new")
+
+    layout.prop(sima, "pivot_point", icon_only=True)
+
+    # uv editing
+    if show_uvedit:
+        uvedit = sima.uv_editor
+
+        layout.prop(toolsettings, "use_uv_select_sync", text="")
+
+        if toolsettings.use_uv_select_sync:
+            layout.template_edit_mode_selection()
+        else:
+            layout.prop(toolsettings, "uv_select_mode", text="", expand=True)
+            layout.prop(uvedit, "sticky_select_mode", icon_only=True)
+
+        row = layout.row(align=True)
+        row.prop(toolsettings, "proportional_edit", icon_only=True)
+        if toolsettings.proportional_edit != 'DISABLED':
+            row.prop(toolsettings, "proportional_edit_falloff", icon_only=True)
+
+        row = layout.row(align=True)
+        row.prop(toolsettings, "use_snap", text="")
+        row.prop(toolsettings, "snap_uv_element", icon_only=True)
+        if toolsettings.snap_uv_element != 'INCREMENT':
+            row.prop(toolsettings, "snap_target", text="")
+
+        mesh = context.edit_object.data
+        layout.prop_search(mesh.uv_textures, "active", mesh, "uv_textures", text="")
+
+    if ima:
+        if ima.is_stereo_3d:
+            row = layout.row()
+            row.prop(sima, "show_stereo_3d", text="")
+
+        # layers
+        layout.template_image_layers(ima, iuser)
+
+        # draw options
+        row = layout.row(align=True)
+        row.prop(sima, "draw_channels", text="", expand=True)
+
+        row = layout.row(align=True)
+        if ima.type == 'COMPOSITE':
+            row.operator("image.record_composite", icon='REC')
+        if ima.type == 'COMPOSITE' and ima.source in {'MOVIE', 'SEQUENCE'}:
+            row.operator("image.play_composite", icon='PLAY')
+
+    if show_uvedit or show_maskedit or mode == 'PAINT':
+        layout.prop(sima, "use_realtime_update", icon_only=True, icon='LOCKED')
 
 def draw_snap_addon(self, context):
-    self.layout.operator(UVSelectCursorHelper.bl_idname, icon="PLUGIN")
+    self.layout.operator(LLUVHelpers_SelectCursorOperator.bl_idname, icon="PLUGIN")
+
+DOPESHEET_HT_header_draw_original = None
 
 def register():
-    #bpy.utils.register_module(__name__)
+    global DOPESHEET_HT_header_draw_original
+    DOPESHEET_HT_header_draw_original = bpy.types.IMAGE_HT_header.draw
+    bpy.types.IMAGE_HT_header.draw = IMAGE_HT_header_draw
+
     bpy.types.IMAGE_MT_uvs_snap.append(draw_snap_addon)
     return
 
 def unregister():
-    #bpy.utils.unregister_module(__name__)
-    bpy.types.IMAGE_MT_uvs_snap.remove(draw_snap_addon)
+    try:
+        global DOPESHEET_HT_header_draw_original
+        if DOPESHEET_HT_header_draw_original is not None:
+            bpy.types.IMAGE_HT_header.draw = DOPESHEET_HT_header_draw_original
+            DOPESHEET_HT_header_draw_original = None
+
+        bpy.types.IMAGE_MT_uvs_snap.remove(draw_snap_addon)
+    except: pass
     return
 
 if __name__ == "__main__":

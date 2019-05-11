@@ -21,10 +21,6 @@ class LLPoseHelpers_MirrorOperator(Operator):
     def invoke(self, context, _event):
         return self.execute(context)
 
-def render_pose_options(self, context):
-    arm = context.active_object.data
-    self.layout.prop(arm, "llpose_mirror_x_axis")
-
 def mirror_axis(self, context):
     layout = self.layout
     arm = context.active_object.data
@@ -116,6 +112,10 @@ def mirror_armature_init(scene):
         for arm in [obj for obj in scene.objects if obj.type == "ARMATURE"]:
             if hasattr(arm.data, "llpose_mirror_x_axis"):
                 xaxis_mirror_changed(arm.data, bpy.context)
+
+def render_pose_options(self, context):
+    arm = context.active_object.data
+    self.layout.prop(arm, "llpose_mirror_x_axis")
 
 def register():
     bpy.types.VIEW3D_PT_tools_posemode_options.append(render_pose_options)
