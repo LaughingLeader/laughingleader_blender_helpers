@@ -75,7 +75,7 @@ select_modes = (
 )
 
 class LeaderHelpersAddonPreferences(AddonPreferences):
-    bl_idname = __name__
+    bl_idname = "laughingleader_blender_helpers"
 
     addon_preferences_list = []
 
@@ -147,17 +147,19 @@ class LeaderToggleViewportShading(Operator):
     
     def invoke(self, context, event):
         try:
-            target = context.user_preferences.addons[LeaderHelpersAddonPreferences.bl_idname].preferences.viewport_shading_target
-            last = context.user_preferences.addons[LeaderHelpersAddonPreferences.bl_idname].preferences.viewport_shading_last
-            #Source: https://blender.stackexchange.com/a/17746
-            area = next(area for area in bpy.context.screen.areas if area.type == "VIEW_3D")
-            space = next(space for space in area.spaces if space.type == "VIEW_3D")
+            preferences = context.user_preferences.addons["laughingleader_blender_helpers"].preferences
+            if preferences is not None:
+                target = preferences.viewport_shading_target
+                last = preferences.viewport_shading_last
+                #Source: https://blender.stackexchange.com/a/17746
+                area = next(area for area in bpy.context.screen.areas if area.type == "VIEW_3D")
+                space = next(space for space in area.spaces if space.type == "VIEW_3D")
 
-            if space.viewport_shade != target:
-                context.user_preferences.addons[LeaderHelpersAddonPreferences.bl_idname].preferences.viewport_shading_last = space.viewport_shade
-                space.viewport_shade = target
-            else:
-                space.viewport_shade = last
+                if space.viewport_shade != target:
+                    preferences.viewport_shading_last = space.viewport_shade
+                    space.viewport_shade = target
+                else:
+                    space.viewport_shade = last
         except Exception as e:
             print("[LeaderHelpers] Error setting viewport shading:\n{}".format(e))
             pass

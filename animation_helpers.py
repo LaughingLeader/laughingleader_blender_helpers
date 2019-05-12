@@ -4,6 +4,8 @@ from bpy.props import StringProperty, BoolProperty, FloatProperty, EnumProperty,
 
 from bl_ui import space_dopesheet
 
+from . import leader
+
 def action_set():
     return (bpy.context.object is not None and
         bpy.context.object.animation_data is not None
@@ -71,8 +73,9 @@ def DOPESHEET_HT_header_draw(self, context):
         row.operator("action.layer_next", text="", icon='TRIA_UP')
 
         layout.template_ID(st, "action", new="action.new", unlink="action.unlink")
-        if st.mode == "ACTION" and bpy.context.user_preferences.addons["laughingleader_blender_helpers"].preferences.general_enable_deletion and action_set():
-            layout.operator(LLAnimHelpers_DeleteOperator.bl_idname, icon="CANCEL", text="", emboss=False)
+        preferences = leader.get_preferences(context)
+        if preferences is not None and st.mode == "ACTION" and preferences.general_enable_deletion and action_set():
+                layout.operator(LLAnimHelpers_DeleteOperator.bl_idname, icon="CANCEL", text="", emboss=False)
 
         row = layout.row(align=True)
         row.operator("action.push_down", text="Push Down", icon='NLA_PUSHDOWN')

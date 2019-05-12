@@ -8,6 +8,8 @@ from bpy.props import CollectionProperty, PointerProperty, BoolProperty
 
 from bl_ui import space_image
 
+from . import leader
+
 bl_info = {
     "name": "UV Helpers",
     "author": "LaughingLeader",
@@ -133,7 +135,11 @@ class LLUVHelpers_UnwrappedChecker(Operator):
         if node.type == "MESH":
             if (node.data is not None):
 
-                select_mode = context.user_preferences.addons["laughingleader_blender_helpers"].preferences.uvhelpers_errorchecker_select_mode
+                preferences = leader.get_preferences(context)
+                if preferences is not None:
+                    select_mode = preferences.uvhelpers_errorchecker_select_mode
+                else:
+                    select_mode = "VERTEX"
 
                 if select_mode == "FACE":
                     bpy.context.tool_settings.mesh_select_mode = (False, False, True)
@@ -189,7 +195,7 @@ class LLUVHelpers_UnwrappedChecker(Operator):
                 total_errors = len(uv_errors)
                 if total_errors > 0:
                     can_select = True
-                    select_all = context.user_preferences.addons["laughingleader_blender_helpers"].preferences.uvhelpers_errorchecker_select_all is True
+                    select_all = preferences is not None and preferences.uvhelpers_errorchecker_select_all is True
                     for uv_error in uv_errors:
                         print("[ERROR]: UV problem detected!")
                         print("  Vert1: (%f,%f,%f)" % uv_error.vert1.co[:])
@@ -437,8 +443,10 @@ class UVHelperPanel(bpy.types.Panel):
         layout.label("UV Errors")
         box = layout.box()
         #layout.prop(self, "select_all")
-        box.prop(context.user_preferences.addons["laughingleader_blender_helpers"].preferences, "uvhelpers_errorchecker_select_all")
-        box.prop(context.user_preferences.addons["laughingleader_blender_helpers"].preferences, "uvhelpers_errorchecker_select_mode")
+        preferences = leader.get_preferences(context)
+        if preferences is not None:
+            box.prop(preferences, "uvhelpers_errorchecker_select_all")
+            box.prop(preferences, "uvhelpers_errorchecker_select_mode")
         uv_helper_op = box.operator(LLUVHelpers_UnwrappedChecker.bl_idname)
 
         layout.label("Misc")
@@ -512,7 +520,8 @@ def IMAGE_HT_header_draw(self, context):
     if not show_render:
         layout.prop(sima, "use_image_pin", text="")
 
-    if bpy.context.user_preferences.addons["laughingleader_blender_helpers"].preferences.general_enable_deletion:
+    preferences = leader.get_preferences(context)
+    if preferences is not None and preferences.general_enable_deletion:
         layout.operator(LLUVHelpers_DeleteOperator.bl_idname, icon="CANCEL", text="", emboss=False)
 
     layout.prop(sima, "mode", text="")
@@ -526,7 +535,7 @@ def IMAGE_HT_header_draw(self, context):
     # uv editing
     if show_uvedit:
         uvedit = sima.uv_editor
-
+        print("UV Editing")
         layout.prop(toolsettings, "use_uv_select_sync", text="")
 
         if toolsettings.use_uv_select_sync:

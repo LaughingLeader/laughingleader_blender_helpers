@@ -50,6 +50,8 @@ from bpy.props import (
         )
 from bpy.app.handlers import persistent
 
+from . import leader
+
 EDIT_MODES = {'EDIT_MESH', 'EDIT_CURVE', 'EDIT_SURFACE', 'EDIT_METABALL', 'EDIT_TEXT', 'EDIT_ARMATURE'}
 
 NUM_LAYERS = 20
@@ -602,14 +604,15 @@ panels = (
 
 def update_panel(self, context):
     try:
-        enabled = context.user_preferences.addons["laughingleader_blender_helpers"].preferences.layer_manager_enabled is True
+        preferences = leader.get_preferences(context)
+        enabled = preferences is not None and preferences.layer_manager_enabled is True
         for panel in panels:
             if "bl_rna" in panel.__dict__:
                 bpy.utils.unregister_class(panel)
 
         if enabled:
             for panel in panels:
-                panel.bl_category = context.user_preferences.addons["laughingleader_blender_helpers"].preferences.layer_manager_category
+                panel.bl_category = preferences.layer_manager_category
                 bpy.utils.register_class(panel)
 
     except Exception as e:
@@ -675,11 +678,13 @@ def unregister():
 
 def enabled_changed(self, context):
     try:
-        enabled = context.user_preferences.addons["laughingleader_blender_helpers"].preferences.layer_manager_enabled is True
-        if enabled:
-            register_manual()
-        else:
-            unregister()
+        preferences = leader.get_preferences(context)
+        if preferences is not None:
+            enabled = preferences.layer_manager_enabled is True
+            if enabled:
+                register_manual()
+            else:
+                unregister()
 
     except Exception as e:
         print("[LeaderHelpers:LayerManager:check_init_data] Error enabling/disabling.\nError:\n{}".format(e))
