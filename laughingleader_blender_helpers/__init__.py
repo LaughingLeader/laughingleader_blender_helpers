@@ -31,6 +31,8 @@ from bpy.props import (
         )
 
 import bpy_extras.keyconfig_utils
+import traceback
+from bpy.app.handlers import persistent
 
 # load and reload submodules
 ##################################
@@ -85,6 +87,12 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
         default=False
     )
 
+    debug_mode = BoolProperty(
+        name="Enable Debug Mode",
+        description="Auto-opens the console window on load, and enables other debug features",
+        default=False
+    )
+
     from . import layer_manager
 
     layer_manager_enabled = BoolProperty(default=True, name="Enable", description="Enable the Layer Manager", update=layer_manager.enabled_changed)
@@ -131,6 +139,7 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
         box.prop(self, "layer_manager_category")
         #box.prop(self, "layer_manager_default_showextras")
         layout.prop(self, "viewport_shading_target")
+        layout.prop(self, "debug_mode")
         return
 
 class LeaderToggleViewportShading(Operator):
@@ -200,7 +209,21 @@ def unregister_keymaps():
     addon_keymaps.clear()
     print("[LeaderHelpers] Unregistered keybindings.")
 
-import traceback
+toggled_console = False
+
+@persistent
+def load_post_init(scene):
+    global toggled_console
+    if toggled_console == False:
+        try:
+            preferences = bpy.context.user_preferences.addons["laughingleader_blender_helpers"].preferences
+            if preferences is not None:
+                if preferences.debug_mode == True:
+                    print("[LeaderHelpers] Debug mode is enabled. Toggling system console window.")
+                    bpy.ops.wm.console_toggle()
+        except: pass
+        toggled_console = True
+        bpy.app.handlers.load_post.remove(load_post_init)
 
 def register():
     try: bpy.utils.register_module(__name__)
@@ -216,6 +239,8 @@ def register():
 
     register_keymaps()
 
+    bpy.app.handlers.load_post.append(load_post_init)
+
     #wm = bpy.context.window_manager
     #bpy_extras.keyconfig_utils.keyconfig_test(wm.keyconfigs.default)
 
@@ -224,8 +249,10 @@ def unregister():
         unregister_func = getattr(module, "unregister", None)
         if callable(unregister_func):
             unregister_func()
-    
-    try: bpy.utils.unregister_module(__name__)
+
+    try: 
+        bpy.utils.unregister_module(__name__)
+        bpy.app.handlers.load_post.remove(load_post_init)
     except: traceback.print_exc()
 
     unregister_keymaps()
