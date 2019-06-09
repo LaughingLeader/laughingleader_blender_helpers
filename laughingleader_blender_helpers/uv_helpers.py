@@ -535,7 +535,6 @@ def IMAGE_HT_header_draw(self, context):
     # uv editing
     if show_uvedit:
         uvedit = sima.uv_editor
-        print("UV Editing")
         layout.prop(toolsettings, "use_uv_select_sync", text="")
 
         if toolsettings.use_uv_select_sync:
