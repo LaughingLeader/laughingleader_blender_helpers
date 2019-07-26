@@ -647,10 +647,10 @@ def register_manual():
     # pprint(dir(bpy.context.user_preferences.addons[LeaderHelpersAddonPreferences.bl_idname].preferences.string_properties.properties))
     # print("=======================================")
 
-    bpy.types.Scene.layergroups = CollectionProperty(type=LayerGroup)
+    bpy.types.Scene.layergroups = CollectionProperty(type=LayerGroup, name="Layer Manager Groups")
     # Unused, but this is needed for the TemplateList to work...
-    bpy.types.Scene.layergroups_index = IntProperty(default=-1)
-    bpy.types.Scene.namedlayers = PointerProperty(type=NamedLayers)
+    bpy.types.Scene.layergroups_index = IntProperty(default=-1, options={"HIDDEN"})
+    bpy.types.Scene.namedlayers = PointerProperty(type=NamedLayers, name="Layer Manager Settings")
     registered = True
     print("[LeaderHelpers:LayerManager:register_manual] Initialized UI layer manager.")
     

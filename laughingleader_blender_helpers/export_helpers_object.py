@@ -220,7 +220,10 @@ def check_init_data(scene):
                 obj.llexportprops.original_name = obj.name
 
 def register():
-    bpy.types.Scene.llexport_object_drawhandler = PointerProperty(type=LLExportHelpers_AddonDrawHandler)
+    bpy.types.Scene.llexport_object_drawhandler = PointerProperty(type=LLExportHelpers_AddonDrawHandler, 
+            name="LeaderHelpers Export Draw Handlers",
+            description="A list of functions other addons can register to in order to draw more properties on the object export panel"
+    )
     bpy.app.handlers.scene_update_post.append(check_init_data)
 
 def unregister():
