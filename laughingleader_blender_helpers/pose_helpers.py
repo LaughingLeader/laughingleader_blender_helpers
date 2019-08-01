@@ -117,10 +117,11 @@ def render_pose_options(self, context):
     arm = context.active_object.data
     self.layout.prop(arm, "llpose_mirror_x_axis")
 
-def register():
-    from bpy.utils import register_class
-    register_class(LLPoseHelpers_MirrorOperator)
+classes = [
+	LLPoseHelpers_MirrorOperator
+]
 
+def register():
     bpy.types.VIEW3D_PT_tools_posemode_options.append(render_pose_options)
     bpy.types.Armature.llpose_mirror_x_axis: BoolProperty(name="Mirror X Axis", description="Mirror loc/rot/scale posing on opposite bones along the x-axis", default=False, update=xaxis_mirror_changed)
     bpy.app.handlers.depsgraph_update_post.append(mirror_armature_init)
@@ -129,8 +130,6 @@ def unregister():
     try:
         bpy.types.VIEW3D_PT_tools_posemode_options.remove(render_pose_options)
         del bpy.types.Armature.llpose_mirror_x_axis
-        from bpy.utils import unregister_class
-        unregister_class(LLPoseHelpers_MirrorOperator)
     except: pass
 
 if __name__ == "__main__":

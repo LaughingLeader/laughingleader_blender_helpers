@@ -20,7 +20,7 @@ from bpy.props import (
         EnumProperty
         )
 
-class LLObjectSelectionGroup(PropertyGroup):
+class LEADEROBJ_selection_group_entry(PropertyGroup):
     group_id: StringProperty(options={"HIDDEN"})
     name: StringProperty(
             name="Name",
@@ -29,10 +29,10 @@ class LLObjectSelectionGroup(PropertyGroup):
         )
     lock: BoolProperty(name="Lock", default=False)
 
-class LLObjectSelectionGroupProperties(PropertyGroup):
+class LEADEROBJ_selection_group_properties(PropertyGroup):
    
     groups: CollectionProperty(
-            type=LLObjectSelectionGroup,
+            type=LEADEROBJ_selection_group_entry,
             name="Groups",
             description="All selection groups")
 
@@ -97,7 +97,7 @@ class LEADEROBJ_OT_select_groups_remove(bpy.types.Operator):
 
 class LEADEROBJ_OT_select_groups_move_base(bpy.types.Operator):
     bl_label = ""
-    bl_idname = ""
+    bl_idname = "leaderobj.select_groups_move_base"
     direction = ""
 
     @classmethod
@@ -141,7 +141,7 @@ class LEADEROBJ_OT_select_groups_move_down(LEADEROBJ_OT_select_groups_move_base,
 
 class LEADEROBJ_OT_select_groups_assignbase(bpy.types.Operator):
     bl_label = ""
-    bl_idname = ""
+    bl_idname = "leaderobj.select_groups_assignbase"
     mode = ""
 
     @classmethod
@@ -185,9 +185,9 @@ class LEADEROBJ_OT_select_groups_unassign(LEADEROBJ_OT_select_groups_assignbase,
     bl_idname = "leaderobj.select_groups_remove"
     mode = "REMOVE"
 
-class LEADEROBJ_OT_baseselect(bpy.types.Operator):
+class LEADEROBJ_OT_select_groups_select_base(bpy.types.Operator):
     bl_label = ""
-    bl_idname = ""
+    bl_idname = "leaderobj.select_groups_select_base"
     mode = ""
 
     @classmethod
@@ -212,13 +212,13 @@ class LEADEROBJ_OT_baseselect(bpy.types.Operator):
 
         return {'FINISHED'}
     
-class LEADEROBJ_OT_select_groups_select(LEADEROBJ_OT_baseselect, bpy.types.Operator):
+class LEADEROBJ_OT_select_groups_select(LEADEROBJ_OT_select_groups_select_base, bpy.types.Operator):
     """Select vertices in the group"""
     bl_label = "Select"
     bl_idname = "leaderobj.select_groups_select"
     mode = "SELECT"
 
-class LEADEROBJ_OT_select_groups_deselect(LEADEROBJ_OT_baseselect, bpy.types.Operator):
+class LEADEROBJ_OT_select_groups_deselect(LEADEROBJ_OT_select_groups_select_base, bpy.types.Operator):
     """Deselect vertices in the group"""
     bl_label = "Deselect"
     bl_idname = "leaderobj.select_groups_deselect"
@@ -270,27 +270,26 @@ class LEADEROBJ_PT_select_groups(bpy.types.Panel):
             sub.operator(LEADEROBJ_OT_select_groups_select.bl_idname, text="Select")
             sub.operator(LEADEROBJ_OT_select_groups_deselect.bl_idname, text="Deselect")
 
-classes = (
-	LLObjectSelectionGroup,
-	LLObjectSelectionGroupProperties,
+classes = [
+	LEADEROBJ_selection_group_entry,
+	LEADEROBJ_selection_group_properties,
 	LEADEROBJ_UL_select_groups_list,
 	LEADEROBJ_OT_select_groups_add,
 	LEADEROBJ_OT_select_groups_remove,
+	LEADEROBJ_OT_select_groups_move_base,
 	LEADEROBJ_OT_select_groups_move_up,
 	LEADEROBJ_OT_select_groups_move_down,
+	LEADEROBJ_OT_select_groups_assignbase,
 	LEADEROBJ_OT_select_groups_assign,
 	LEADEROBJ_OT_select_groups_unassign,
+	LEADEROBJ_OT_select_groups_select_base,
 	LEADEROBJ_OT_select_groups_select,
 	LEADEROBJ_OT_select_groups_deselect,
 	LEADEROBJ_PT_select_groups
-)
+]
 
 def register():
-    from bpy.utils import register_class
-    for cls in classes:
-        register_class(cls)
-
-    bpy.types.Object.llselectiongroups : PointerProperty(type=LLObjectSelectionGroupProperties)
+    bpy.types.Object.llselectiongroups : PointerProperty(type=LEADEROBJ_selection_group_properties)
     #bpy.utils.register_class(DATA_PT_llhelpers_selection_groups)
 
 def unregister():
@@ -298,9 +297,6 @@ def unregister():
         del bpy.types.Object.llselectiongroups
     except: pass
     #bpy.utils.unregister_class(DATA_PT_llhelpers_selection_groups)
-    from bpy.utils import unregister_class
-    for cls in reversed(classes):
-        unregister_class(cls)
 
 if __name__ == "__main__":
     register()

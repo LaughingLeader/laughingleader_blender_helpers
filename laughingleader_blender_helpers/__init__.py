@@ -226,10 +226,10 @@ classes = (
     LEADER_OT_toggle_viewport_shading
 )
 
+from . import leader
+
 def register():
-    from bpy.utils import register_class
-    for cls in classes:
-        register_class(cls)
+    leader.safe_register(classes)
 
     print("[LeaderHelpers] Registered {} with {} modules".format(bl_info["name"], len(modules)))
     
@@ -238,6 +238,9 @@ def register():
         if callable(register_func):
             #print("[LeaderHelpers] Calling register() for {} ".format(module))
             register_func()
+        module_classes = getattr(module, "classes", None)
+        if module_classes is not None:
+            leader.safe_register(module_classes)
 
     register_keymaps()
 
@@ -247,15 +250,18 @@ def register():
     #bpy_extras.keyconfig_utils.keyconfig_test(wm.keyconfigs.default)
 
 def unregister():
+    leader.safe_unregister(classes)
+
     for module in modules:
         unregister_func = getattr(module, "unregister", None)
         if callable(unregister_func):
             unregister_func()
+        
+        module_classes = getattr(module, "classes", None)
+        if module_classes is not None:
+            leader.safe_unregister(module_classes)
 
     try: 
-        from bpy.utils import unregister_class
-        for cls in reversed(classes):
-            unregister_class(cls)
         bpy.app.handlers.load_post.remove(load_post_init)
     except: traceback.print_exc()
 
