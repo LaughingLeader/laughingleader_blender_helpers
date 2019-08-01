@@ -21,22 +21,22 @@ from bpy.props import (
         )
 
 class LLObjectSelectionGroup(PropertyGroup):
-    group_id = StringProperty(options={"HIDDEN"})
-    name = StringProperty(
+    group_id: StringProperty(options={"HIDDEN"})
+    name: StringProperty(
             name="Name",
             description="The name of the selection group",
             default="Group"
         )
-    lock = BoolProperty(name="Lock", default=False)
+    lock: BoolProperty(name="Lock", default=False)
 
 class LLObjectSelectionGroupProperties(PropertyGroup):
    
-    groups = CollectionProperty(
+    groups: CollectionProperty(
             type=LLObjectSelectionGroup,
             name="Groups",
             description="All selection groups")
 
-    active_index = IntProperty(options={"HIDDEN"})
+    active_index: IntProperty(options={"HIDDEN"})
 
 class LEADEROBJ_UL_select_groups_list(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
@@ -290,7 +290,7 @@ def register():
     for cls in classes:
         register_class(cls)
 
-    bpy.types.Object.llselectiongroups = PointerProperty(type=LLObjectSelectionGroupProperties)
+    bpy.types.Object.llselectiongroups : PointerProperty(type=LLObjectSelectionGroupProperties)
     #bpy.utils.register_class(DATA_PT_llhelpers_selection_groups)
 
 def unregister():

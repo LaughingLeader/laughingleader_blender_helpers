@@ -18,36 +18,36 @@ bl_info = {
 }
 
 class LLExportHelpers_ObjectMergeData(PropertyGroup):
-    obj = PointerProperty(name="Object", type=bpy.types.Object, options={"HIDDEN"})
-    name = StringProperty(name="Name")
+    obj : PointerProperty(name="Object", type=bpy.types.Object, options={"HIDDEN"})
+    name: StringProperty(name="Name")
 
 class LLExportHelpers_ObjectMergeProperties(PropertyGroup):
 
-    active_layers_only = BoolProperty(
+    active_layers_only: BoolProperty(
             name="Active Layers Only", 
             description="Only show objects on active layers as addable", 
             default=False)
           
-    armatures = CollectionProperty(
+    armatures: CollectionProperty(
             type=LLExportHelpers_ObjectMergeData,
             name="Armatures",
             description="Selected armatures for merging when exporting")
 
-    armatures_index = IntProperty(options={"HIDDEN"})
+    armatures_index: IntProperty(options={"HIDDEN"})
           
-    meshes = CollectionProperty(
+    meshes: CollectionProperty(
             type=LLExportHelpers_ObjectMergeData,
             name="Meshes",
             description="Selected meshes for merging when exporting")
 
-    meshes_index = IntProperty(options={"HIDDEN"})
+    meshes_index: IntProperty(options={"HIDDEN"})
 
-    initialized = BoolProperty(
+    initialized: BoolProperty(
         default=False,
         options={"HIDDEN"}
     )
 
-    # selectable_objects = CollectionProperty(
+    # selectable_objects: CollectionProperty(
     #     type=LLExportHelpers_ObjectMergeData,
     #     name="Selectable Objects",
     #     options={"HIDDEN"}
@@ -55,7 +55,7 @@ class LLExportHelpers_ObjectMergeProperties(PropertyGroup):
 
     @classmethod
     def register(cls):
-        bpy.types.Scene.llexportmerge = PointerProperty(
+        bpy.types.Scene.llexportmerge : PointerProperty(
             name="Export Merge Objects",
             description="Objects to merge with when exporting",
             type=cls
@@ -100,7 +100,7 @@ class LLExportHelpers_SceneMergeListActionsOperator(Operator):
     bl_idname = "llhelpers.export_merge_listactions"
     bl_label = "Add Object for Merging"
 
-    object_type = EnumProperty(
+    object_type : EnumProperty(
         name="Target Object Type",
         items=(
             ("ARMATURE", "Armature", ""),
@@ -109,7 +109,7 @@ class LLExportHelpers_SceneMergeListActionsOperator(Operator):
         default=("MESH")
     )
 
-    action = EnumProperty(
+    action : EnumProperty(
         items=(
             ('UP', "Up", ""),
             ('DOWN', "Down", ""),
@@ -144,7 +144,7 @@ class LLExportHelpers_SceneMergeListActionsOperator(Operator):
                     selectables.append((obj.name, obj.name, obj.name))
         return selectables
 
-    add_object = EnumProperty(
+    add_object : EnumProperty(
         items=get_selectables,
         name="Object",
         description="Add the selected object to the merge list"
@@ -248,7 +248,7 @@ class LLExportHelpers_ExportMergePanel(Panel):
     bl_label = "Export Settings"
     #bl_options = {'DEFAULT_CLOSED'}
 
-    bpy.types.WindowManager.llmergelist_visible = BoolProperty(name="Merging", default=False, description="Select objects to merge when exporting")
+    bpy.types.WindowManager.llmergelist_visible: BoolProperty(name="Merging", default=False, description="Select objects to merge when exporting")
 
     def draw_merge_list(self, context, layout, data, objects_var, index_var, label, object_type):
 

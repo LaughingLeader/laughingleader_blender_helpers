@@ -45,7 +45,7 @@ modules = developer_utils.setup_addon_modules(__path__, "laughingleader_blender_
 class LeaderAddonPreferencesData(bpy.types.PropertyGroup):
     bl_idname = "leader.addon_preferences_data"
 
-    label = StringProperty()
+    label: StringProperty()
     props = []
 
     def draw(self, context):
@@ -81,34 +81,34 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
 
     addon_preferences_list = []
 
-    general_enable_deletion = BoolProperty(
+    general_enable_deletion: BoolProperty(
         name="Enable Delete Buttons",
         description="Enable visibility of delete buttons for data (actions, textures, etc)",
         default=False
     )
 
-    debug_mode = BoolProperty(
+    debug_mode: BoolProperty(
         name="Enable Debug Mode",
         description="Auto-opens the console window on load, and enables other debug features",
         default=False
     )
 
-    viewport_shading_target = EnumProperty(
+    viewport_shading_target : EnumProperty(
         name="Toggle Viewport Shading Target",
         description="The shading type to switch to when toggling the viewport shading",
         items=shading_modes,
         default=("MATERIAL")
     )
 
-    viewport_shading_last = EnumProperty(default=("SOLID"), items=shading_modes, options={"HIDDEN"})
+    viewport_shading_last : EnumProperty(default=("SOLID"), items=shading_modes, options={"HIDDEN"})
 
-    uvhelpers_errorchecker_select_all = BoolProperty(
+    uvhelpers_errorchecker_select_all: BoolProperty(
             name="Select All Problems",
             description="Select all problematic UVs. If disabled, will only select the first problem found",
             default=False
     )
 
-    uvhelpers_errorchecker_select_mode = EnumProperty(
+    uvhelpers_errorchecker_select_mode : EnumProperty(
         name="Mode",
         description="The selection mode to use when selecting bad UVs",
         items=select_modes,

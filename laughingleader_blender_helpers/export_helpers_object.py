@@ -26,7 +26,7 @@ class LLExportHelpers_AddonDebugOperator(Operator):
 class LLExportHelpers_ObjectExportProperties(PropertyGroup):
     @classmethod
     def register(cls):
-        bpy.types.Object.llexportprops = PointerProperty(
+        bpy.types.Object.llexportprops : PointerProperty(
             name="Export Properties",
             description="Various export options",
             type=cls,
@@ -37,19 +37,19 @@ class LLExportHelpers_ObjectExportProperties(PropertyGroup):
             if self.export_name == "__DEFAULT__":
                 self.export_name = self.original_name
 
-        cls.export_name = StringProperty(
+        cls.export_name: StringProperty(
             name="Export Name",
             description="The name to use for the object when exporting",
             default="__DEFAULT__", # Little workaround so "Reset to Default Value" uses the object name
             update=export_name_changed
         )
 
-        cls.original_name = StringProperty(
+        cls.original_name: StringProperty(
             options={"HIDDEN"},
             default=""
         )
 
-        cls.apply_transforms = EnumProperty(
+        cls.apply_transforms : EnumProperty(
             name="Apply Transformations",
             description="Apply transformations when exporting",
             items=(("DISABLED", "Disabled", ""),
@@ -63,7 +63,7 @@ class LLExportHelpers_ObjectExportProperties(PropertyGroup):
             default=("DISABLED")
             )
 
-        cls.initialized = BoolProperty(
+        cls.initialized: BoolProperty(
             options={"HIDDEN"},
             default=False
         )
@@ -116,7 +116,7 @@ class LLExportHelpers_ObjectExportProperties(PropertyGroup):
 class LLExportHelpers_AddonDrawHandler(PropertyGroup):
     functions = []
 
-    count = IntProperty(
+    count: IntProperty(
         default=0,
         name="Total Draw Functions",
         description="The total number of draw functions for an object's export properties. These are added by other addons"
@@ -137,7 +137,7 @@ class LLExportHelpers_ObjectExportPropertiesPanel(Panel):
     bl_region_type = "WINDOW"
     bl_context = "object"
 
-    bpy.types.WindowManager.llmergelist_visible = BoolProperty(name="Merging", default=False, description="Select objects to merge when exporting")
+    bpy.types.WindowManager.llmergelist_visible: BoolProperty(name="Merging", default=False, description="Select objects to merge when exporting")
 
     def addon_is_enabled(self, context, addon_name):
         try:
@@ -217,7 +217,7 @@ def register():
     for cls in classes:
         register_class(cls)
 
-    bpy.types.Scene.llexport_object_drawhandler = PointerProperty(type=LLExportHelpers_AddonDrawHandler, 
+    bpy.types.Scene.llexport_object_drawhandler : PointerProperty(type=LLExportHelpers_AddonDrawHandler, 
             name="LeaderHelpers Export Draw Handlers",
             description="A list of functions other addons can register to in order to draw more properties on the object export panel"
     )
