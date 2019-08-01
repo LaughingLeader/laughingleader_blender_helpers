@@ -1,13 +1,13 @@
 bl_info = {
-    "name": "LaughingLeader Helpers",
+    "name": "Leader Helpers",
     "author": "LaughingLeader",
-    "blender": (2, 7, 9),
-    "api": 38691,
+    "version": (2, 0, 0),
+    "blender": (2, 80, 0),
     "location": "",
-    "description": (""),
+    "description": ("A set of helpers that add additional functionality to Blender"),
     "warning": "",
-    "wiki_url": (""),
-    "tracker_url": "",
+    "wiki_url": ("https://github.com/LaughingLeader/laughingleader_blender_helpers/wiki"),
+    "tracker_url": "https://github.com/LaughingLeader/laughingleader_blender_helpers",
     "support": "COMMUNITY",
     "category": "System"}
 
@@ -92,12 +92,6 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
         description="Auto-opens the console window on load, and enables other debug features",
         default=False
     )
-
-    from . import layer_manager
-
-    layer_manager_enabled = BoolProperty(default=True, name="Enable", description="Enable the Layer Manager", update=layer_manager.enabled_changed)
-    #layer_manager_default_showextras = BoolProperty(default=False, name="Show Extras by Default", description="Show the extra options for layers by default. This can be overwritten in the Layer Manager panel")
-    layer_manager_category = StringProperty(default="Layers", name="Panel Name", description="Display name to use for the Layer Manager Panel", update=layer_manager.update_panel)
 
     viewport_shading_target = EnumProperty(
         name="Toggle Viewport Shading Target",
