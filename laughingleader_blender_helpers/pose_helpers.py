@@ -28,8 +28,8 @@ def mirror_axis(self, context):
         layout.operator(LLPoseHelpers_MirrorOperator.bl_idname)
 
 def mirror_get_sideless_name(bone):
-    regex = r"(.*)(_+)((L|R))(_+)(.*)"
-    subst = "\\1\\6" # Strip out underscores and side indicators (_L_, _R_, etc)
+    regex = r"(.*?)(_+)(L|R)(_*?.*)"
+    subst = "\\1\\4" # Strip out underscores and side indicators (_L_, _R_, etc)
 
     result = re.sub(regex, subst, bone.name, 1, re.IGNORECASE)
 
