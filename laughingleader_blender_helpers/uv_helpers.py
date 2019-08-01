@@ -417,7 +417,7 @@ class UVHelperPanel(bpy.types.Panel):
     bl_label = "Helpers"
     bl_idname = "llhelpers.uv_helperpanel"
     bl_space_type = 'IMAGE_EDITOR'
-    bl_region_type = 'TOOLS'
+    bl_region_type = 'UI'
     bl_category = 'Helpers'
 
     @classmethod

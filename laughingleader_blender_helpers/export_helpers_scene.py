@@ -226,7 +226,7 @@ class LLExportHelpers_SceneMergeListActionsOperator(Operator):
         self.layout.prop(self, "add_object")
         #self.layout.prop_search(context.scene.llexportmerge, "addobject", context.scene.llexportmerge, "selectable_objects")
 
-class LLExportHelpers_MergeObjectList(UIList):
+class LLExportHelpers_UL_MergeObjectList(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
             iconval = "OBJECT_DATA"
@@ -242,7 +242,7 @@ class LLExportHelpers_MergeObjectList(UIList):
             
 class LLExportHelpers_ExportMergePanel(Panel):
     bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
+    bl_region_type = 'UI'
     bl_context = "objectmode"
     bl_category = "Export"
     bl_label = "Export Settings"
@@ -261,7 +261,7 @@ class LLExportHelpers_ExportMergePanel(Panel):
 
         layout.label(text=label)
         row = layout.row()
-        row.template_list("LLExportHelpers_MergeObjectList", "", data, objects_var, data, index_var, rows=rows, type="DEFAULT")
+        row.template_list("LLExportHelpers_UL_MergeObjectList", "", data, objects_var, data, index_var, rows=rows, type="DEFAULT")
 
         col = row.column(align=True)
         op = col.operator(LLExportHelpers_SceneMergeListActionsOperator.bl_idname, icon='ZOOMIN', text="")
@@ -316,7 +316,7 @@ classes = (
 	LLExportHelpers_ObjectMergeData,
 	LLExportHelpers_ObjectMergeProperties,
 	LLExportHelpers_SceneMergeListActionsOperator,
-	LLExportHelpers_MergeObjectList,
+	LLExportHelpers_UL_MergeObjectList,
 	LLExportHelpers_ExportMergePanel
 )
 
@@ -325,10 +325,10 @@ def register():
     for cls in classes:
         register_class(cls)
 
-    bpy.app.handlers.scene_update_post.append(check_init_data)
+    bpy.app.handlers.depsgraph_update_post.append(check_init_data)
 
 def unregister():
-    bpy.app.handlers.scene_update_post.remove(check_init_data)
+    bpy.app.handlers.depsgraph_update_post.remove(check_init_data)
     from bpy.utils import unregister_class
     for cls in reversed(classes):
         unregister_class(cls)

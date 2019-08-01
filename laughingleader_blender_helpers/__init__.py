@@ -43,7 +43,7 @@ importlib.reload(developer_utils)
 modules = developer_utils.setup_addon_modules(__path__, "laughingleader_blender_helpers", "bpy" in locals())
 
 class LeaderAddonPreferencesData(bpy.types.PropertyGroup):
-    bl_idname = "leader_addonpreferencesdata"
+    bl_idname = "leader.addon_preferences_data"
 
     label = StringProperty()
     props = []
@@ -53,7 +53,7 @@ class LeaderAddonPreferencesData(bpy.types.PropertyGroup):
         col.label(text=self.label)
         return
 
-class LeaderPreferencesList(UIList):
+class LEADER_UL_preferences_list(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         if self.layout_type in {"DEFAULT", "COMPACT"}:
             item.draw(context, layout)
@@ -116,7 +116,7 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
     )
 
     def draw(self, context):
-        #self.layout.template_list("LeaderPreferencesList", "", self, "preference_data", self, "index")
+        #self.layout.template_list("LEADER_UL_preferences_list", "", self, "preference_data", self, "index")
 
         # for drawable in LeaderHelpersAddonPreferences.addon_preferences_list:
         #     drawfunc = getattr(drawable, "draw", None)
@@ -136,9 +136,9 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
         layout.prop(self, "debug_mode")
         return
 
-class LeaderToggleViewportShading(Operator):
+class LEADER_OT_toggle_viewport_shading(Operator):
     """Print the list of active addons to the debug window"""
-    bl_idname = "llhelpers.op_toggle_viewport_shading"
+    bl_idname = "leader.toggle_viewport_shading"
     bl_label = "Toggle Viewport Shading (Leader Helpers)"
 
     @classmethod
@@ -182,7 +182,7 @@ def register_keymaps():
     wm = bpy.context.window_manager
 
     km = wm.keyconfigs.default.keymaps.new('3D View', space_type='VIEW_3D', region_type='WINDOW', modal=False)
-    kmi = km.keymap_items.new(LeaderToggleViewportShading.bl_idname, type='NONE', value='PRESS')
+    kmi = km.keymap_items.new(LEADER_OT_toggle_viewport_shading.bl_idname, type='NONE', value='PRESS')
     addon_keymaps.append((km, kmi))
 
     print("[LeaderHelpers] Registered keybindings.")
@@ -221,9 +221,9 @@ def load_post_init(scene):
 
 classes = (
     LeaderAddonPreferencesData,
-    LeaderPreferencesList,
+    LEADER_UL_preferences_list,
     LeaderHelpersAddonPreferences,
-    LeaderToggleViewportShading
+    LEADER_OT_toggle_viewport_shading
 )
 
 def register():

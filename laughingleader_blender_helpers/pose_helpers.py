@@ -96,18 +96,18 @@ appended_update_func = False
 def xaxis_mirror_changed(self, context):
     global appended_update_func
     if self.llpose_mirror_x_axis and not appended_update_func:
-        bpy.app.handlers.scene_update_post.append(mirror_axis_scene)
+        bpy.app.handlers.depsgraph_update_post.append(mirror_axis_scene)
         #bpy.types.VIEW3D_MT_pose.append(mirror_axis)
         appended_update_func = True
-        print("[LeaderHelpers:PoseHelpers:xaxis_mirror_changed] Appended mirror_axis_scene to bpy.app.handlers.scene_update_post.")
+        print("[LeaderHelpers:PoseHelpers:xaxis_mirror_changed] Appended mirror_axis_scene to bpy.app.handlers.depsgraph_update_post.")
     elif not self.llpose_mirror_x_axis and appended_update_func:
-        bpy.app.handlers.scene_update_post.remove(mirror_axis_scene)
+        bpy.app.handlers.depsgraph_update_post.remove(mirror_axis_scene)
         #bpy.types.VIEW3D_MT_pose.remove(mirror_axis)
         appended_update_func = False
-        print("[LeaderHelpers:PoseHelpers:xaxis_mirror_changed] Removed mirror_axis_scene from bpy.app.handlers.scene_update_post.")
+        print("[LeaderHelpers:PoseHelpers:xaxis_mirror_changed] Removed mirror_axis_scene from bpy.app.handlers.depsgraph_update_post.")
 
 def mirror_armature_init(scene):
-    bpy.app.handlers.scene_update_post.remove(mirror_armature_init)
+    bpy.app.handlers.depsgraph_update_post.remove(mirror_armature_init)
     if scene.objects is not None:
         for arm in [obj for obj in scene.objects if obj.type == "ARMATURE"]:
             if hasattr(arm.data, "llpose_mirror_x_axis"):
@@ -117,26 +117,20 @@ def render_pose_options(self, context):
     arm = context.active_object.data
     self.layout.prop(arm, "llpose_mirror_x_axis")
 
-classes = (
-	LLPoseHelpers_MirrorOperator
-)
-
 def register():
     from bpy.utils import register_class
-    for cls in classes:
-        register_class(cls)
+    register_class(LLPoseHelpers_MirrorOperator)
 
     bpy.types.VIEW3D_PT_tools_posemode_options.append(render_pose_options)
     bpy.types.Armature.llpose_mirror_x_axis = BoolProperty(name="Mirror X Axis", description="Mirror loc/rot/scale posing on opposite bones along the x-axis", default=False, update=xaxis_mirror_changed)
-    bpy.app.handlers.scene_update_post.append(mirror_armature_init)
+    bpy.app.handlers.depsgraph_update_post.append(mirror_armature_init)
 
 def unregister():
     try:
         bpy.types.VIEW3D_PT_tools_posemode_options.remove(render_pose_options)
         del bpy.types.Armature.llpose_mirror_x_axis
         from bpy.utils import unregister_class
-        for cls in reversed(classes):
-            unregister_class(cls)
+        unregister_class(LLPoseHelpers_MirrorOperator)
     except: pass
 
 if __name__ == "__main__":

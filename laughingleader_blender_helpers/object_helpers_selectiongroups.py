@@ -38,7 +38,7 @@ class LLObjectSelectionGroupProperties(PropertyGroup):
 
     active_index = IntProperty(options={"HIDDEN"})
 
-class LLHelpers_UL_SelectionGroups(UIList):
+class LEADEROBJ_UL_select_groups_list(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         group = item
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
@@ -49,11 +49,11 @@ class LLHelpers_UL_SelectionGroups(UIList):
             layout.alignment = 'CENTER'
             layout.label(text="", icon_value=icon)
 
-class LLObjectSelectionGroup_AddOperator(bpy.types.Operator):
+class LEADEROBJ_OT_select_groups_add(bpy.types.Operator):
     """Add a new selection group"""
-    bl_idname = "llhelpers.object_selectiongroup_add"
     bl_label = "Add"
     bl_options = {'UNDO'}
+    bl_idname = "leaderobj.select_groups_add"
 
     @classmethod
     def poll(cls, context):
@@ -78,11 +78,11 @@ class LLObjectSelectionGroup_AddOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class LLObjectSelectionGroup_RemoveOperator(bpy.types.Operator):
+class LEADEROBJ_OT_select_groups_remove(bpy.types.Operator):
     """Remove the selected group"""
-    bl_idname = "llhelpers.object_selectiongroup_remove"
     bl_label = "Remove"
     bl_options = {'UNDO'}
+    bl_idname = "leaderobj.select_groups_remove"
 
     @classmethod
     def poll(cls, context):
@@ -95,11 +95,11 @@ class LLObjectSelectionGroup_RemoveOperator(bpy.types.Operator):
         
         return {'FINISHED'}
 
-class LLObjectSelectionGroup_MoveOperatorBase(bpy.types.Operator):
-    bl_idname = "llhelpers.object_selectiongroup_movebase"
+class LEADEROBJ_OT_select_groups_move_base(bpy.types.Operator):
     bl_label = ""
+    bl_idname = ""
     direction = ""
-    
+
     @classmethod
     def poll(cls, context):
         obj = context.object
@@ -127,21 +127,21 @@ class LLObjectSelectionGroup_MoveOperatorBase(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class LLObjectSelectionGroup_MoveUpOperator(LLObjectSelectionGroup_MoveOperatorBase, bpy.types.Operator):
+class LEADEROBJ_OT_select_groups_move_up(LEADEROBJ_OT_select_groups_move_base, bpy.types.Operator):
     """Move the selected group up"""
-    bl_idname = "llhelpers.object_selectiongroup_moveup"
     bl_label = "Move Up"
+    bl_idname = "leaderobj.select_groups_move_up"
     direction = "UP"
 
-class LLObjectSelectionGroup_MoveDownOperator(LLObjectSelectionGroup_MoveOperatorBase, bpy.types.Operator):
+class LEADEROBJ_OT_select_groups_move_down(LEADEROBJ_OT_select_groups_move_base, bpy.types.Operator):
     """Move the selected group down"""
-    bl_idname = "llhelpers.object_selectiongroup_movedown"
     bl_label = "Move Down"
+    bl_idname = "leaderobj.select_groups_move_down"
     direction = "DOWN"
 
-class LLObjectSelectionGroup_AssignOperatorBase(bpy.types.Operator):
-    bl_idname = "llhelpers.object_selectiongroup_assignbase"
+class LEADEROBJ_OT_select_groups_assignbase(bpy.types.Operator):
     bl_label = ""
+    bl_idname = ""
     mode = ""
 
     @classmethod
@@ -173,21 +173,21 @@ class LLObjectSelectionGroup_AssignOperatorBase(bpy.types.Operator):
 
         return {'FINISHED'}
 
-class LLObjectSelectionGroup_AssignOperator(LLObjectSelectionGroup_AssignOperatorBase, bpy.types.Operator):
+class LEADEROBJ_OT_select_groups_assign(LEADEROBJ_OT_select_groups_assignbase, bpy.types.Operator):
     """Assign selected vertices to the group"""
-    bl_idname = "llhelpers.object_selectiongroup_assign"
     bl_label = "Assign"
+    bl_idname = "leaderobj.select_groups_assign"
     mode = "ADD"
 
-class LLObjectSelectionGroup_UnAssignOperator(LLObjectSelectionGroup_AssignOperatorBase, bpy.types.Operator):
+class LEADEROBJ_OT_select_groups_unassign(LEADEROBJ_OT_select_groups_assignbase, bpy.types.Operator):
     """Unassign selected vertices in group"""
-    bl_idname = "llhelpers.object_selectiongroup_unssign"
     bl_label = "Remove"
+    bl_idname = "leaderobj.select_groups_remove"
     mode = "REMOVE"
 
-class LLObjectSelectionGroup_BaseSelectOperator(bpy.types.Operator):
-    bl_idname = "llhelpers.object_selectiongroup_baseselect"
+class LEADEROBJ_OT_baseselect(bpy.types.Operator):
     bl_label = ""
+    bl_idname = ""
     mode = ""
 
     @classmethod
@@ -212,19 +212,19 @@ class LLObjectSelectionGroup_BaseSelectOperator(bpy.types.Operator):
 
         return {'FINISHED'}
     
-class LLObjectSelectionGroup_SelectOperator(LLObjectSelectionGroup_BaseSelectOperator, bpy.types.Operator):
+class LEADEROBJ_OT_select_groups_select(LEADEROBJ_OT_baseselect, bpy.types.Operator):
     """Select vertices in the group"""
-    bl_idname = "llhelpers.object_selectiongroup_select"
     bl_label = "Select"
+    bl_idname = "leaderobj.select_groups_select"
     mode = "SELECT"
 
-class LLObjectSelectionGroup_DeselectOperator(LLObjectSelectionGroup_BaseSelectOperator, bpy.types.Operator):
+class LEADEROBJ_OT_select_groups_deselect(LEADEROBJ_OT_baseselect, bpy.types.Operator):
     """Deselect vertices in the group"""
-    bl_idname = "llhelpers.object_selectiongroup_deselect"
     bl_label = "Deselect"
+    bl_idname = "leaderobj.select_groups_deselect"
     mode = "DESELECT"
 
-class LLObjectSelectionGroups_Panel(bpy.types.Panel):
+class LEADEROBJ_PT_select_groups(bpy.types.Panel):
     bl_label = "Selection Groups"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -247,45 +247,42 @@ class LLObjectSelectionGroups_Panel(bpy.types.Panel):
             rows = 4
 
         row = layout.row()
-        row.template_list("LLHelpers_UL_SelectionGroups", "", ob.llselectiongroups, "groups", ob.llselectiongroups, "active_index", rows=rows)
+        row.template_list("LEADEROBJ_UL_select_groups_list", "", ob.llselectiongroups, "groups", ob.llselectiongroups, "active_index", rows=rows)
 
         col = row.column(align=True)
-        col.operator(LLObjectSelectionGroup_AddOperator.bl_idname, icon='ZOOMIN', text="")
-        props = col.operator(LLObjectSelectionGroup_RemoveOperator.bl_idname, icon='ZOOMOUT', text="")
+        col.operator(LEADEROBJ_OT_select_groups_add.bl_idname, icon='ZOOMIN', text="")
+        props = col.operator(LEADEROBJ_OT_select_groups_remove.bl_idname, icon='ZOOMOUT', text="")
         #props.all_unlocked = props.all = False
         #col.menu("MESH_MT_vertex_group_specials", icon='DOWNARROW_HLT', text="")
         if group:
             col.separator()
-            col.operator(LLObjectSelectionGroup_MoveUpOperator.bl_idname, icon='TRIA_UP', text="")
-            col.operator(LLObjectSelectionGroup_MoveDownOperator.bl_idname, icon='TRIA_DOWN', text="")
+            col.operator(LEADEROBJ_OT_select_groups_move_up.bl_idname, icon='TRIA_UP', text="")
+            col.operator(LEADEROBJ_OT_select_groups_move_down.bl_idname, icon='TRIA_DOWN', text="")
 
         if ob.llselectiongroups and (ob.mode == 'EDIT' and ob.type == 'MESH'):
             row = layout.row()
 
             sub = row.row(align=True)
-            sub.operator(LLObjectSelectionGroup_AssignOperator.bl_idname, text="Assign")
-            sub.operator(LLObjectSelectionGroup_UnAssignOperator.bl_idname, text="Remove")
+            sub.operator(LEADEROBJ_OT_select_groups_assign.bl_idname, text="Assign")
+            sub.operator(LEADEROBJ_OT_select_groups_unassign.bl_idname, text="Remove")
 
             sub = row.row(align=True)
-            sub.operator(LLObjectSelectionGroup_SelectOperator.bl_idname, text="Select")
-            sub.operator(LLObjectSelectionGroup_DeselectOperator.bl_idname, text="Deselect")
+            sub.operator(LEADEROBJ_OT_select_groups_select.bl_idname, text="Select")
+            sub.operator(LEADEROBJ_OT_select_groups_deselect.bl_idname, text="Deselect")
 
 classes = (
 	LLObjectSelectionGroup,
 	LLObjectSelectionGroupProperties,
-	LLHelpers_UL_SelectionGroups,
-	LLObjectSelectionGroup_AddOperator,
-	LLObjectSelectionGroup_RemoveOperator,
-	LLObjectSelectionGroup_MoveOperatorBase,
-	LLObjectSelectionGroup_MoveUpOperator,
-	LLObjectSelectionGroup_MoveDownOperator,
-	LLObjectSelectionGroup_AssignOperatorBase,
-	LLObjectSelectionGroup_AssignOperator,
-	LLObjectSelectionGroup_UnAssignOperator,
-	LLObjectSelectionGroup_BaseSelectOperator,
-	LLObjectSelectionGroup_SelectOperator,
-	LLObjectSelectionGroup_DeselectOperator,
-	LLObjectSelectionGroups_Panel
+	LEADEROBJ_UL_select_groups_list,
+	LEADEROBJ_OT_select_groups_add,
+	LEADEROBJ_OT_select_groups_remove,
+	LEADEROBJ_OT_select_groups_move_up,
+	LEADEROBJ_OT_select_groups_move_down,
+	LEADEROBJ_OT_select_groups_assign,
+	LEADEROBJ_OT_select_groups_unassign,
+	LEADEROBJ_OT_select_groups_select,
+	LEADEROBJ_OT_select_groups_deselect,
+	LEADEROBJ_PT_select_groups
 )
 
 def register():

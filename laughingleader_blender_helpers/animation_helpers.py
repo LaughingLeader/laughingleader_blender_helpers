@@ -11,10 +11,10 @@ def action_set():
         bpy.context.object.animation_data is not None
         and bpy.context.object.animation_data.action is not None)
 
-class LLAnimHelpers_DeleteOperator(Operator):
+class LEADERANIM_OT_delete_action(Operator):
     """Delete this action"""
     bl_label = "Delete Action"
-    bl_idname = "llhelpers.action_delete"
+    bl_idname = "leaderanim.delete_action"
     bl_options = {"UNDO"}
 
     @classmethod
@@ -75,7 +75,7 @@ def DOPESHEET_HT_header_draw(self, context):
         layout.template_ID(st, "action", new="action.new", unlink="action.unlink")
         preferences = leader.get_preferences(context)
         if preferences is not None and st.mode == "ACTION" and preferences.general_enable_deletion and action_set():
-                layout.operator(LLAnimHelpers_DeleteOperator.bl_idname, icon="CANCEL", text="", emboss=False)
+                layout.operator(LEADERANIM_OT_delete_action.bl_idname, icon="CANCEL", text="", emboss=False)
 
         row = layout.row(align=True)
         row.operator("action.push_down", text="Push Down", icon='NLA_PUSHDOWN')
@@ -123,14 +123,9 @@ def DOPESHEET_HT_header_draw(self, context):
 
 DOPESHEET_HT_header_draw_original = None
 
-classes = (
-	LLAnimHelpers_DeleteOperator
-)
-
 def register():
     from bpy.utils import register_class
-    for cls in classes:
-        register_class(cls)
+    register_class(LEADERANIM_OT_delete_action)
 
     global DOPESHEET_HT_header_draw_original
     DOPESHEET_HT_header_draw_original = bpy.types.DOPESHEET_HT_header.draw
@@ -144,8 +139,7 @@ def unregister():
             DOPESHEET_HT_header_draw_original = None
     except: pass
     from bpy.utils import unregister_class
-    for cls in reversed(classes):
-        unregister_class(cls)
+    unregister_class(LEADERANIM_OT_delete_action)
 
 if __name__ == "__main__":
     register()

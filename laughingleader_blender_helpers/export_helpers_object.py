@@ -221,10 +221,10 @@ def register():
             name="LeaderHelpers Export Draw Handlers",
             description="A list of functions other addons can register to in order to draw more properties on the object export panel"
     )
-    bpy.app.handlers.scene_update_post.append(check_init_data)
+    bpy.app.handlers.depsgraph_update_post.append(check_init_data)
 
 def unregister():
-    bpy.app.handlers.scene_update_post.remove(check_init_data)
+    bpy.app.handlers.depsgraph_update_post.remove(check_init_data)
     try:
         del bpy.types.Scene.llexport_object_drawhandler
     except: pass
