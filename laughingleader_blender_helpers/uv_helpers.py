@@ -10,20 +10,6 @@ from bl_ui import space_image
 
 from . import leader
 
-bl_info = {
-    "name": "UV Helpers",
-    "author": "LaughingLeader",
-    "blender": (2, 7, 9),
-    "api": -1,
-    "location": "Edit Mode > UV / Image Editor > UVs",
-    "description": ("Helpers for cleaning up UVs, checking for errors, and more"),
-    "warning": "",
-    "wiki_url": (""),
-    "tracker_url": "",
-    "support": "COMMUNITY",
-    "category": "UV"
-}
-
 class LLUVHelpers_TriangleError:
     def __init__(self, vert1, vert2, loop1, loop2):
         self.vert1 = vert1
@@ -583,13 +569,26 @@ def draw_snap_addon(self, context):
 
 DOPESHEET_HT_header_draw_original = None
 
+classes = (
+	LLUVHelpers_UnwrappedChecker,
+	LLUVHelpers_SelectCursorOperator,
+	LLUVHelpers_SelectSharpOperator,
+	LLUVHelpers_SelectSeamOperator,
+	LLUVHelpers_ImageReloaderOperator,
+	UVHelperPanel,
+	LLUVHelpers_DeleteOperator
+)
+
 def register():
+    from bpy.utils import register_class
+    for cls in classes:
+        register_class(cls)
+
     global DOPESHEET_HT_header_draw_original
     DOPESHEET_HT_header_draw_original = bpy.types.IMAGE_HT_header.draw
     bpy.types.IMAGE_HT_header.draw = IMAGE_HT_header_draw
 
     bpy.types.IMAGE_MT_uvs_snap.append(draw_snap_addon)
-    return
 
 def unregister():
     try:
@@ -599,8 +598,12 @@ def unregister():
             DOPESHEET_HT_header_draw_original = None
 
         bpy.types.IMAGE_MT_uvs_snap.remove(draw_snap_addon)
+
+        from bpy.utils import unregister_class
+        for cls in reversed(classes):
+            unregister_class(cls)
+
     except: pass
-    return
 
 if __name__ == "__main__":
     register()

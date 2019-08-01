@@ -20,20 +20,6 @@ from bpy.props import (
         EnumProperty
         )
 
-bl_info = {
-    "name": "3D View Selection Helpers",
-    "author": "LaughingLeader",
-    "blender": (2, 7, 9),
-    "api": -1,
-    "location": "Toolshelf > Selection Tab",
-    "description": ("Helpers for cleaning up UVs, checking for errors, and more"),
-    "warning": "",
-    "wiki_url": (""),
-    "tracker_url": "",
-    "support": "COMMUNITY",
-    "category": "View3D"
-}
-
 class LLObjectSelectionGroup(PropertyGroup):
     group_id = StringProperty(options={"HIDDEN"})
     name = StringProperty(
@@ -284,17 +270,40 @@ class LLObjectSelectionGroups_Panel(bpy.types.Panel):
             sub.operator(LLObjectSelectionGroup_SelectOperator.bl_idname, text="Select")
             sub.operator(LLObjectSelectionGroup_DeselectOperator.bl_idname, text="Deselect")
 
+classes = (
+	LLObjectSelectionGroup,
+	LLObjectSelectionGroupProperties,
+	LLHelpers_UL_SelectionGroups,
+	LLObjectSelectionGroup_AddOperator,
+	LLObjectSelectionGroup_RemoveOperator,
+	LLObjectSelectionGroup_MoveOperatorBase,
+	LLObjectSelectionGroup_MoveUpOperator,
+	LLObjectSelectionGroup_MoveDownOperator,
+	LLObjectSelectionGroup_AssignOperatorBase,
+	LLObjectSelectionGroup_AssignOperator,
+	LLObjectSelectionGroup_UnAssignOperator,
+	LLObjectSelectionGroup_BaseSelectOperator,
+	LLObjectSelectionGroup_SelectOperator,
+	LLObjectSelectionGroup_DeselectOperator,
+	LLObjectSelectionGroups_Panel
+)
+
 def register():
+    from bpy.utils import register_class
+    for cls in classes:
+        register_class(cls)
+
     bpy.types.Object.llselectiongroups = PointerProperty(type=LLObjectSelectionGroupProperties)
     #bpy.utils.register_class(DATA_PT_llhelpers_selection_groups)
-    return
 
 def unregister():
     try:
         del bpy.types.Object.llselectiongroups
     except: pass
     #bpy.utils.unregister_class(DATA_PT_llhelpers_selection_groups)
-    return
+    from bpy.utils import unregister_class
+    for cls in reversed(classes):
+        unregister_class(cls)
 
 if __name__ == "__main__":
     register()

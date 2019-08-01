@@ -312,8 +312,23 @@ def check_init_data(scene):
                 scene.llexportmerge.initialized = True
         first_init = False
 
+classes = (
+	LLExportHelpers_ObjectMergeData,
+	LLExportHelpers_ObjectMergeProperties,
+	LLExportHelpers_SceneMergeListActionsOperator,
+	LLExportHelpers_MergeObjectList,
+	LLExportHelpers_ExportMergePanel
+)
+
 def register():
+    from bpy.utils import register_class
+    for cls in classes:
+        register_class(cls)
+
     bpy.app.handlers.scene_update_post.append(check_init_data)
 
 def unregister():
     bpy.app.handlers.scene_update_post.remove(check_init_data)
+    from bpy.utils import unregister_class
+    for cls in reversed(classes):
+        unregister_class(cls)

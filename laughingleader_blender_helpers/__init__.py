@@ -40,7 +40,7 @@ from bpy.app.handlers import persistent
 import importlib
 from . import developer_utils
 importlib.reload(developer_utils)
-modules = developer_utils.setup_addon_modules(__path__, __name__, "bpy" in locals())
+modules = developer_utils.setup_addon_modules(__path__, "laughingleader_blender_helpers", "bpy" in locals())
 
 class LeaderAddonPreferencesData(bpy.types.PropertyGroup):
     bl_idname = "leader_addonpreferencesdata"
@@ -219,9 +219,17 @@ def load_post_init(scene):
         toggled_console = True
         bpy.app.handlers.load_post.remove(load_post_init)
 
+classes = (
+    LeaderAddonPreferencesData,
+    LeaderPreferencesList,
+    LeaderHelpersAddonPreferences,
+    LeaderToggleViewportShading
+)
+
 def register():
-    try: bpy.utils.register_module(__name__)
-    except: traceback.print_exc()
+    from bpy.utils import register_class
+    for cls in classes:
+        register_class(cls)
 
     print("[LeaderHelpers] Registered {} with {} modules".format(bl_info["name"], len(modules)))
     
@@ -245,14 +253,16 @@ def unregister():
             unregister_func()
 
     try: 
-        bpy.utils.unregister_module(__name__)
+        from bpy.utils import unregister_class
+        for cls in reversed(classes):
+            unregister_class(cls)
         bpy.app.handlers.load_post.remove(load_post_init)
     except: traceback.print_exc()
 
     unregister_keymaps()
     print("Unregistered {}".format(bl_info["name"]))
 
-#print("__init__.py running? {}".format(__name__))
+#print("__init__.py running? {}".format("laughingleader_blender_helpers"))
 
-if __name__ == "__main__":
+if "laughingleader_blender_helpers" == "__main__":
     register()

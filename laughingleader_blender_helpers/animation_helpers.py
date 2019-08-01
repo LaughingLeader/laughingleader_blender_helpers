@@ -123,7 +123,15 @@ def DOPESHEET_HT_header_draw(self, context):
 
 DOPESHEET_HT_header_draw_original = None
 
+classes = (
+	LLAnimHelpers_DeleteOperator
+)
+
 def register():
+    from bpy.utils import register_class
+    for cls in classes:
+        register_class(cls)
+
     global DOPESHEET_HT_header_draw_original
     DOPESHEET_HT_header_draw_original = bpy.types.DOPESHEET_HT_header.draw
     bpy.types.DOPESHEET_HT_header.draw = DOPESHEET_HT_header_draw
@@ -135,6 +143,9 @@ def unregister():
             bpy.types.DOPESHEET_HT_header.draw = DOPESHEET_HT_header_draw_original
             DOPESHEET_HT_header_draw_original = None
     except: pass
+    from bpy.utils import unregister_class
+    for cls in reversed(classes):
+        unregister_class(cls)
 
 if __name__ == "__main__":
     register()
