@@ -76,6 +76,11 @@ class LLExportHelpers_ObjectExportProperties(PropertyGroup):
                 ("ALL", "Location/Rotation/Scale", "")),
             default=("DISABLED")
             )
+        
+        cls.locked = BoolProperty(
+            options={"HIDDEN"},
+            default=False
+        )
 
         cls.initialized = BoolProperty(
             options={"HIDDEN"},
@@ -85,6 +90,13 @@ class LLExportHelpers_ObjectExportProperties(PropertyGroup):
     def draw(self, layout, context, obj):
         layout.prop(self, "export_name")
         layout.prop(self, "apply_transforms")
+
+    def copy(self, target_props, lock=True):
+        if "export_name" in target_props:
+            self.export_name = target_props.export_name
+        if "apply_transforms" in target_props:
+            self.apply_transforms = target_props.apply_transforms
+        self.locked = lock
 
     def prepare(self, context, obj):
         transform_option = obj.llexportprops.apply_transforms
@@ -112,7 +124,7 @@ class LLExportHelpers_ObjectExportProperties(PropertyGroup):
             obj.select = False
             #print("Applied rotation: " + obj.name + " : " + str(obj.rotation_euler))
 
-        if self.export_name == "__DEFAULT__":
+        if self.export_name == "__DEFAULT__" and self.locked == False:
             obj["export_name"] = obj.name
         else:
             if self.export_name != "":
@@ -214,7 +226,7 @@ def check_init_data(scene):
                     obj.llexportprops.export_name = obj.name
                 obj.llexportprops.initialized = True
         else:
-            if obj.name != obj.llexportprops.original_name:
+            if obj.name != obj.llexportprops.original_name and obj.llexportprops.locked == False:
                 if obj.llexportprops.export_name == obj.llexportprops.original_name:
                     obj.llexportprops.export_name = obj.name
                 obj.llexportprops.original_name = obj.name

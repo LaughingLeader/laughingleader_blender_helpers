@@ -76,7 +76,6 @@ class NamedLayer(PropertyGroup):
             default=False
             )
 
-
 class NamedLayers(PropertyGroup):
     layers = CollectionProperty(type=NamedLayer)
 
@@ -97,9 +96,21 @@ class NamedLayers(PropertyGroup):
             default=False,
             description="Use a classic layer selection visibility"
             )
+    replace_visible = BoolProperty(name="Replace", default=False)
+    regex_find = StringProperty(
+            name="Find",
+            default="",
+            description="Match layer names using a regex pattern"
+            )
+    replace_value = StringProperty(
+            name="Replace",
+            default="",
+            description="Replace matches layer names using a regex pattern"
+            )
+    replace_all = BoolProperty(name="All", description="Replace all occurances", default=True)
     use_init = BoolProperty(
-        default=True,
-        options={'HIDDEN'}
+            default=True,
+            options={'HIDDEN'}
     )
 # Stupid, but only solution currently is to use a handler to init that layers collection...
 @persistent
@@ -407,6 +418,57 @@ class SCENE_OT_namedlayer_show_all(Operator):
 
         return {'FINISHED'}
 
+import traceback
+import re
+
+class SCENE_OT_namedlayers_replace_names(Operator):
+    """Replace names using a regex pattern"""
+    bl_idname = "scene.namedlayer_show_all"
+    bl_label = "Replace All"
+    bl_options = {"UNDO"}
+
+    show = BoolProperty()
+    regex_find = StringProperty()
+    replace_value = StringProperty()
+    replace_all = BoolProperty(default=True)
+
+    @classmethod
+    def poll(cls, context):
+        return context.scene and (context.area.spaces.active.type == 'VIEW_3D')
+
+    def rename_layer(self, context, layer):
+        try:
+            regex = r"{}".format(self.regex_find)
+            replace_value = self.replace_value
+            find_str = layer.name
+            #print("[LayerManager] Searching for pattern '{}' in string '{}' and replacing with '{}'"
+            #.format(regex, replace_value, find_str))
+            result = re.sub(regex, replace_value, find_str, 0, re.MULTILINE)
+            if result is not None:
+                layer.name = result
+                return True
+        except:
+            traceback.print_exc()
+            return False
+
+    def execute(self, context):
+        scene = context.scene
+        view_3d = context.area.spaces.active
+        show = self.show
+        active_layer = scene.active_layer
+
+        #print("Starting replace... {}".format(scene.namedlayers))
+
+        # check for lock camera and layer is active
+        layer_cont = scene if view_3d.lock_camera_and_layers else view_3d
+
+        if show:
+            for layer in scene.namedlayers.layers:
+                success = self.rename_layer(context, layer)
+                if self.replace_all == False and success:
+                    break
+
+        return {'FINISHED'}
 
 class SCENE_PT_namedlayer_layers(Panel):
     bl_space_type = 'VIEW_3D'
@@ -459,6 +521,27 @@ class SCENE_PT_namedlayer_layers(Panel):
         col = row.column()
         col.prop(namedlayers, "use_layer_indices", text="Indices")
         col.prop(namedlayers, "use_hide_empty_layers", text="Hide Empty")
+
+        row = layout.row()
+        row.prop(namedlayers, "replace_visible", text="Replace Names", toggle=True)
+        if namedlayers.replace_visible:
+            row = layout.row()
+            box = row.box()
+            row = box.row()
+            row.prop(namedlayers, "regex_find")
+            col = row.column()
+            row = box.row()
+            row.prop(namedlayers, "replace_value")
+            row = box.row()
+            #op = row.operator(SCENE_OT_namedlayers_replace_names.bl_idname, emboss=False, icon='VIEWZOOM', text="")
+            text = "Replace All" if namedlayers.replace_all else "Replace First"
+            op = row.operator(SCENE_OT_namedlayers_replace_names.bl_idname, emboss=True, text=text)
+            op.show = namedlayers.regex_find != ""
+            op.regex_find = namedlayers.regex_find
+            op.replace_value = namedlayers.replace_value
+            op.replace_all = namedlayers.replace_all
+            col = row.column()
+            col.prop(namedlayers, "replace_all")
 
         col = layout.column()
         for layer_idx in range(NUM_LAYERS):
