@@ -11,7 +11,7 @@ _Note: This addon is currently experimental, so don't expect absolute stability!
 * Download this repository as a zip (using the green Clone or download button).
 * Save the addon somewhere where you can find it again.
 * Extract the zip.
-* Copy the folder `laughingleader_blender_helpers`. Make sure this is the folder with the scripts under it (laughingleader_blender_helpers\__init__.py etc).
+* Copy the folder `laughingleader_blender_helpers`. Make sure this is the folder with the scripts under it (`laughingleader_blender_helpers\__init__.py` etc).
 * Paste the laughingleader_blender_helpers folder into your addons folder. Default:
 ```
 C:\Users\Username\AppData\Roaming\Blender Foundation\Blender\2.79\scripts\addons\
