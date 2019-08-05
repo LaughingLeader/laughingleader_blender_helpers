@@ -49,14 +49,18 @@ class LEADER_OT_view3d_set_armature_modifier(Operator):
                 if self.use_replace_existing:
                     for mod in armature_modifiers:
                         mod.object = armature
+                        mod.name = armature.name
                 else:
                     create_new = True
             else:
                 create_new = True
             
             if create_new:
-                mod = obj.modifiers.new("Armature", "ARMATURE")
-                mod.object = armature
+                mod = obj.modifiers.new(armature.name, "ARMATURE")
+                if hasattr(mod, "object"):
+                    mod.object = armature
+                else:
+                    print("[LeaderHelpers] Error adding armature modifier: {}".format(dir(mod)))
 
         return {'FINISHED'}
 
