@@ -13,5 +13,6 @@ def is_visible(scene, obj, layers=True):
 			if scene.layers[i]:
 				if obj.layers[i]:
 					return True
+		return False
 	else:
 		return obj.hide == False

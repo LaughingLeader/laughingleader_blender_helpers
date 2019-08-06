@@ -22,13 +22,29 @@ class LEADER_ActionEntry(PropertyGroup):
 #         actions.append((action.name, action.name, action.name))
 
 #     return actions
-    
+
+def set_visible_animation_can_apply(settings, obj, scene):
+    if leader.is_visible(scene, obj) == False:
+        return False
+    if settings.set_action_active_only == False:
+        return True
+    else:
+        return obj.select == True or scene.objects.active == obj
+
+set_visible_animation_skip = False
+
 def set_visible_animation(settings, context):
-    action = settings.set_action
-    if action != "" and action in bpy.data.actions:
-        for arm in [x for x in context.scene.objects if x.type == "ARMATURE" and leader.is_visible(context.scene, x)]:
-            arm.animation_data.action = bpy.data.actions.get(action)
-        #context.operator.report("Active action set to '{}'.".format(action))
+    global set_visible_animation_skip
+    if set_visible_animation_skip == False:
+        action = settings.set_action
+        if action != "":
+            for arm in [x for x in context.scene.objects if (x.type == "ARMATURE" 
+                    and set_visible_animation_can_apply(settings, x, context.scene) 
+                        and hasattr(x, "animation_data"))]:
+                arm.animation_data.action = bpy.data.actions.get(action)
+            print("Active action set to '{}'.".format(action))
+    else:
+        set_visible_animation_skip = False
 
 class LEADER_PROP_ui_misc_settings(PropertyGroup):
     use_replace_existing = BoolProperty(
@@ -41,6 +57,12 @@ class LEADER_PROP_ui_misc_settings(PropertyGroup):
         name="Set Animation",
         description="Set the action to use for visible armatures",
         update=set_visible_animation
+    )
+
+    set_action_active_only = BoolProperty(
+        name="Active Only",
+        description="Only apply selected animations to selected/active armatures",
+        default=False
     )
 
 class LEADER_OT_view3d_set_armature_modifier(Operator):
@@ -200,21 +222,34 @@ class LEADER_OT_timeline_anim_switch_backward(LEADER_OT_timeline_anim_switch):
 def draw_animation_dropdown(self, context):
     row = self.layout.row(align=True)
     #row.label("Set Animation: ")
+    row.separator()
     row.operator(LEADER_OT_timeline_anim_switch_backward.bl_idname, text="", icon="BACK")
     row.prop_search(context.scene.leader_ui_misc_settings, "set_action", bpy.data, "actions", text="")
     row.operator(LEADER_OT_timeline_anim_switch_forward.bl_idname, text="", icon="FORWARD")
+    row.prop(context.scene.leader_ui_misc_settings, property="set_action_active_only")
 
 from bpy.app.handlers import persistent
 
 last_active_layer = None
+
+def get_action(obj):
+    anim_data = getattr(obj, "animation_data", None)
+    if anim_data is not None:
+        return getattr(anim_data, "action", None)
+    return None
 
 @persistent
 def update_current_action(scene):
     global last_active_layer
     if last_active_layer != scene.active_layer:
         for obj in [x for x in scene.objects if x.type == "ARMATURE"]:
-            if leader.is_visible(scene, obj) and obj.animation_data.action is not None:
+            action = get_action(obj)
+            if action is not None and set_visible_animation_can_apply(scene.leader_ui_misc_settings, obj, scene):
+                print("[LeaderHelpers] Setting action in dropdown to [{}] => '{}'.".format(obj.name, obj.animation_data.action.name))
+                global set_visible_animation_skip
+                set_visible_animation_skip = True
                 scene.leader_ui_misc_settings.set_action = obj.animation_data.action.name
+                break
         last_active_layer = scene.active_layer
 
 def register():
