@@ -27,7 +27,8 @@ from bpy.props import (
         CollectionProperty,
         BoolVectorProperty,
         PointerProperty,
-        EnumProperty
+        EnumProperty,
+        FloatProperty
         )
 
 import bpy_extras.keyconfig_utils
@@ -119,6 +120,13 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
         description="The selection mode to use when selecting bad UVs",
         items=select_modes,
         default=("VERTEX")
+    )
+
+    uvhelpers_errorchecker_length_check_value = IntProperty(
+        name="Precision",
+        description="The minimum length for UV triangles. Lengths less than this value will be selected as an error.\nThe final precision value is x/100000000",
+        default=10,
+        min=1
     )
 
     def draw(self, context):

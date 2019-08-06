@@ -4,7 +4,7 @@ import bmesh
 import math
 
 from bpy.types import Operator, PropertyGroup
-from bpy.props import CollectionProperty, PointerProperty, BoolProperty
+from bpy.props import CollectionProperty, PointerProperty, BoolProperty, FloatProperty
 
 from bl_ui import space_image
 
@@ -25,13 +25,6 @@ bl_info = {
 }
 
 class LLUVHelpers_TriangleError:
-    def __init__(self, vert1, vert2, loop1, loop2):
-        self.vert1 = vert1
-        self.vert2 = vert2
-        self.loop1 = loop1
-        self.loop2 = loop2
-
-class LLUVHelpers_TriangleErrorv2:
     def __init__(self, face, vert1, vert2, vert3, uvloop1, uvloop2, uvloop3):
         self.face = face
         self.vert1 = vert1
@@ -47,81 +40,13 @@ class LLUVHelpers_UnwrappedChecker(Operator):
     bl_label = "Check UV Triangles"
     bl_options = {'REGISTER', 'UNDO'}
 
+    length_check_value = FloatProperty(default=0.0000001)
+
     @classmethod
     def poll(cls, context):
         return (context.mode == 'EDIT_MESH')
 
-    def uv_error(self, vert1, vert2, uv1, uv2):
-        return vert1 != vert2 and uv1 == uv2
-
-    def uv_checkforerrors(self, context, node):
-        if node.type == "MESH":
-            if (node.data is not None):
-
-                #os.system("cls")
-
-                mesh = node.data
-
-                bm = bmesh.from_edit_mesh(mesh)
-                bm.select_mode = {"VERT"}
-                #bm.select_mode = {"VERT"}
-                bm.select_flush(False)
-                uv_layer = bm.loops.layers.uv.active
-
-                uv_errors = []
-
-                for face in bm.faces:
-                    for loop in face.loops:
-                        vert = loop.vert
-                        vert.select_set(False)
-                        #loop.select(False)
-
-                        #print("  Vert: (%f,%f,%f)" % vert.co[:])
-                        uv_loop = loop[uv_layer]
-                        uv = uv_loop.uv
-                        #print("    UV: %f, %f" % uv[:])
-                        ux = uv[0]
-                        uy = uv[1]
-
-                        for checkloop in face.loops:
-                            if checkloop == loop:
-                                break
-
-                            vert2 = checkloop.vert
-                            checkuv_loop = checkloop[uv_layer]
-                            checkuv = checkuv_loop.uv
-
-                            if self.uv_error(vert, vert2, uv, checkuv):
-                                uv_error_entry = LLUVHelpers_TriangleError(vert, vert2, uv_loop, checkuv_loop)
-                                uv_errors.append(uv_error_entry)
-
-                total_errors = len(uv_errors)
-
-                if total_errors > 0:
-                    can_select = True
-                    for uv_error in uv_errors:
-                        print("[ERROR]: UV problem detected!")
-                        print("  Vert1: (%f,%f,%f)" % uv_error.vert1.co[:])
-                        print("  Vert2: (%f,%f,%f)" % uv_error.vert2.co[:])
-                        print("  UV1: (%f,%f)" % uv_error.loop1.uv[:])
-                        print("  UV2: (%f,%f)" % uv_error.loop2.uv[:])
-
-                        if can_select:
-                            uv_error.vert1.select_set(True)
-                            uv_error.vert2.select_set(True)
-                            uv_error.loop1.select = True
-                            uv_error.loop2.select = True
-                            if self.select_all == False:
-                                can_select = False
-
-                    self.report({"WARNING"}, "[LL-UV-Helper] {} total problems found on UV map. Check selected vertices for wrapping issues.".format(total_errors))
-                else:
-                    self.report({"INFO"}, "[LL-UV-Helper] No UV problems found.")
-                    
-                bm.select_flush(True)
-                bmesh.update_edit_mesh(mesh)
-
-    def uv_error_v2(self, uv1, uv2, uv3):
+    def uv_error(self, uv1, uv2, uv3):
         s1 = float(uv2[0] - uv1[0]) # x
         s2 = float(uv3[0] - uv1[0])
         t1 = float(uv2[1] - uv1[1]) # y
@@ -129,9 +54,9 @@ class LLUVHelpers_UnwrappedChecker(Operator):
         
         check1 = float(s1 * t2 - s2 * t1)
 
-        return abs(check1) < 0.0000001
+        return abs(check1) < self.length_check_value
 
-    def uv_checkforerrors_v2(self, context, node):
+    def uv_checkforerrors(self, context, node):
         if node.type == "MESH":
             if (node.data is not None):
 
@@ -188,8 +113,8 @@ class LLUVHelpers_UnwrappedChecker(Operator):
                         #uv2 = vert2.co.xy
                         #uv3 = vert3.co.xy
 
-                        if self.uv_error_v2(uv1, uv2, uv3):
-                            uv_error_entry = LLUVHelpers_TriangleErrorv2(face, vert1, vert2, vert3, uvloop1, uvloop2, uvloop3)
+                        if self.uv_error(uv1, uv2, uv3):
+                            uv_error_entry = LLUVHelpers_TriangleError(face, vert1, vert2, vert3, uvloop1, uvloop2, uvloop3)
                             uv_errors.append(uv_error_entry)
                         
                 total_errors = len(uv_errors)
@@ -235,7 +160,7 @@ class LLUVHelpers_UnwrappedChecker(Operator):
         node = bpy.context.scene.objects.active
 
         bpy.ops.object.mode_set(mode="EDIT")
-        self.uv_checkforerrors_v2(context, node)
+        self.uv_checkforerrors(context, node)
 
         return {'FINISHED'}
 
@@ -444,10 +369,16 @@ class UVHelperPanel(bpy.types.Panel):
         box = layout.box()
         #layout.prop(self, "select_all")
         preferences = leader.get_preferences(context)
+        length_check_value = 10 #0.0000001
         if preferences is not None:
+            length_check_value = float(preferences.uvhelpers_errorchecker_length_check_value/100000000)
+            box.prop(preferences, "uvhelpers_errorchecker_length_check_value")
+            length_check_value_str = "Min Length: "+'{0:.8f}'.format(length_check_value)
+            box.label(length_check_value_str)
             box.prop(preferences, "uvhelpers_errorchecker_select_all")
             box.prop(preferences, "uvhelpers_errorchecker_select_mode")
         uv_helper_op = box.operator(LLUVHelpers_UnwrappedChecker.bl_idname)
+        uv_helper_op.length_check_value = length_check_value
 
         layout.label("Misc")
         layout.operator(LLUVHelpers_SelectCursorOperator.bl_idname)
