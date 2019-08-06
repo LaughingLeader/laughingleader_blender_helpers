@@ -12,12 +12,35 @@ from bpy.props import StringProperty, BoolProperty, FloatProperty, EnumProperty,
 
 from . import leader
 
-class LEADER_PROP_ui_misc_settings(PropertyGroup):
+class LEADER_ActionEntry(PropertyGroup):
+    name = StringProperty()
 
+# def get_actions(scene, context):
+
+#     actions = [("NONE", "None", "")]
+#     for action in context.data.actions:
+#         actions.append((action.name, action.name, action.name))
+
+#     return actions
+    
+def set_visible_animation(settings, context):
+    action = settings.set_action
+    if action != "" and action in bpy.data.actions:
+        for arm in [x for x in context.scene.objects if x.type == "ARMATURE" and leader.is_visible(context.scene, x)]:
+            arm.animation_data.action = bpy.data.actions.get(action)
+        #context.operator.report("Active action set to '{}'.".format(action))
+
+class LEADER_PROP_ui_misc_settings(PropertyGroup):
     use_replace_existing = BoolProperty(
         name="Replace Existing Armature Modifiers",
         description="Replacing existing armature modifiers values instead of creating new ones",
         default=True
+    )
+
+    set_action = StringProperty(
+        name="Set Animation",
+        description="Set the action to use for visible armatures",
+        update=set_visible_animation
     )
 
 class LEADER_OT_view3d_set_armature_modifier(Operator):
@@ -79,12 +102,12 @@ class LEADER_OT_view3d_armature_toggle_mode(Operator):
     @classmethod
     def poll(cls, context):
         for obj in [x for x in context.scene.objects if x.type == "ARMATURE"]:
-            if leader.is_visible(context, obj):
+            if leader.is_visible(context.scene, obj):
                 return True
         return False
     
     def execute(self, context):
-        for arm in [x for x in context.scene.objects if x.type == "ARMATURE" and leader.is_visible(context, x)]:
+        for arm in [x for x in context.scene.objects if x.type == "ARMATURE" and leader.is_visible(context.scene, x)]:
             if self.set_to_pose_mode:
                 bpy.data.armatures[arm.name].pose_position = "POSE"
             else:
@@ -132,19 +155,83 @@ class LEADER_PT_view3d_tools_relations_armature_helpers(Panel):
         op = col.operator(LEADER_OT_view3d_set_armature_modifier.bl_idname, text=optext)
         op.use_replace_existing = use_replace_existing
 
+class LEADER_OT_timeline_anim_switch(Operator):
+    """Switch to the next/previous animation"""
+    bl_label = ""
+    bl_idname = "leader.timeline_anim_switch"
+    bl_options = {"UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+        current_action = context.scene.leader_ui_misc_settings.set_action
+        next_action = None
+        index = bpy.data.actions.find(current_action)
+        if self.forward == True:
+            if index >= len(bpy.data.actions) - 1:
+                index = -1
+            index += 1
+        else:
+            if index <= 0:
+                index = len(bpy.data.actions)
+            index -= 1
+        next_action = bpy.data.actions[index]
+        if next_action is not None:
+            context.scene.leader_ui_misc_settings.set_action = next_action.name
+            print("[LeaderHelpers] Set visible armature action to [{}]'{}'.".format(index, next_action.name))
+
+        return {'FINISHED'}
+
+    def invoke(self, context, _event):
+        return self.execute(context)
+
+class LEADER_OT_timeline_anim_switch_forward(LEADER_OT_timeline_anim_switch):
+    """Switch to the next animation"""
+    bl_idname = "leader.timeline_anim_switch_forward"
+    forward = BoolProperty(default=True)
+
+class LEADER_OT_timeline_anim_switch_backward(LEADER_OT_timeline_anim_switch):
+    """Switch to the previous animation"""
+    bl_idname = "leader.timeline_anim_switch_backward"
+    forward = BoolProperty(default=False)
+
+def draw_animation_dropdown(self, context):
+    row = self.layout.row(align=True)
+    #row.label("Set Animation: ")
+    row.operator(LEADER_OT_timeline_anim_switch_backward.bl_idname, text="", icon="BACK")
+    row.prop_search(context.scene.leader_ui_misc_settings, "set_action", bpy.data, "actions", text="")
+    row.operator(LEADER_OT_timeline_anim_switch_forward.bl_idname, text="", icon="FORWARD")
+
+from bpy.app.handlers import persistent
+
+last_active_layer = None
+
+@persistent
+def update_current_action(scene):
+    global last_active_layer
+    if last_active_layer != scene.active_layer:
+        for obj in [x for x in scene.objects if x.type == "ARMATURE"]:
+            if leader.is_visible(scene, obj) and obj.animation_data.action is not None:
+                scene.leader_ui_misc_settings.set_action = obj.animation_data.action.name
+        last_active_layer = scene.active_layer
+
 def register():
     try: 
         bpy.types.Scene.leader_ui_misc_settings = PointerProperty(type=LEADER_PROP_ui_misc_settings, 
             name="LeaderHelpers UI Misc Settings",
             description="Miscellaneous settings for various UI helpers"
         )
-
+        bpy.types.TIME_HT_header.append(draw_animation_dropdown)
+        bpy.app.handlers.scene_update_post.append(update_current_action)
     except: pass
 
 def unregister():
     try: 
         #del bpy.types.Scene.leader_ui_misc_settings
-        pass
+        bpy.types.TIME_HT_header.remove(draw_animation_dropdown)
+        bpy.app.handlers.scene_update_post.remove(update_current_action)
     except: pass
 
 if __name__ == "__main__":
