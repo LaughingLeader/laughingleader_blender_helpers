@@ -369,7 +369,7 @@ class UVHelperPanel(bpy.types.Panel):
         box = layout.box()
         #layout.prop(self, "select_all")
         preferences = leader.get_preferences(context)
-        length_check_value = 10 #0.0000001
+        length_check_value = 10 #0.00000010
         if preferences is not None:
             length_check_value = float(preferences.uvhelpers_errorchecker_length_check_value/100000000)
             box.prop(preferences, "uvhelpers_errorchecker_length_check_value")

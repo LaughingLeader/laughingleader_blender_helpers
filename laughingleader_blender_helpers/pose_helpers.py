@@ -4,7 +4,7 @@ from bpy.props import StringProperty, BoolProperty, FloatProperty, EnumProperty,
 
 import re
 
-class LLPoseHelpers_MirrorOperator(Operator):
+class LEADER_OT_pose_helpers_mirror(Operator):
     """"""
     bl_label = "Mirror Pose Movements on the X-Axis"
     bl_idname = "llhelpers.pose_mirroroperator"
@@ -25,7 +25,7 @@ def mirror_axis(self, context):
     layout = self.layout
     arm = context.active_object.data
     if arm.llpose_mirror_x_axis:
-        layout.operator(LLPoseHelpers_MirrorOperator.bl_idname)
+        layout.operator(LEADER_OT_pose_helpers_mirror.bl_idname)
 
 def mirror_get_sideless_name(bone):
     regex = r"(.*?)(_+)(L|R)(_*?.*)"
