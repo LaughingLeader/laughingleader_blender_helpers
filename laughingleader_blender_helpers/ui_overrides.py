@@ -41,8 +41,11 @@ def set_visible_animation(settings, context):
             for arm in [x for x in context.scene.objects if (x.type == "ARMATURE" 
                     and set_visible_animation_can_apply(settings, x, context.scene) 
                         and hasattr(x, "animation_data"))]:
-                arm.animation_data.action = bpy.data.actions.get(action)
-            print("Active action set to '{}'.".format(action))
+                if hasattr(arm, "animation_data") and arm.animation_data != None:
+                    arm.animation_data.action = bpy.data.actions.get(action)
+                    print("[LeaderHelpers] Active action set to '{}'.".format(action))
+                else:
+                    print("[LeaderHelpers] [ERROR] Armature has no animation_data!")
     else:
         set_visible_animation_skip = False
 
