@@ -248,6 +248,10 @@ class LLExportHelpers_ExportMergePanel(Panel):
     bl_label = "Export Settings"
     #bl_options = {'DEFAULT_CLOSED'}
 
+    @classmethod
+    def poll(cls, context):
+        return False
+
     bpy.types.WindowManager.llmergelist_visible = BoolProperty(name="Merging", default=False, description="Select objects to merge when exporting")
 
     def draw_merge_list(self, context, layout, data, objects_var, index_var, label, object_type):
