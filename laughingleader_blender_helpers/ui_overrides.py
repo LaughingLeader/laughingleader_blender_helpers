@@ -9,6 +9,7 @@
 import bpy
 from bpy.types import Operator, AddonPreferences, PropertyGroup, UIList, Panel, Menu
 from bpy.props import StringProperty, BoolProperty, FloatProperty, EnumProperty, CollectionProperty, PointerProperty, IntProperty
+from mathutils import Matrix
 
 from . import leader
 
@@ -37,17 +38,26 @@ def set_visible_animation(settings, context):
     global set_visible_animation_skip
     if set_visible_animation_skip == False:
         action = settings.set_action
-        if action != "":
-            for arm in [x for x in context.scene.objects if (x.type == "ARMATURE" 
-                and set_visible_animation_can_apply(settings, x, context.scene))]:
+        for arm in [x for x in context.scene.objects if (x.type == "ARMATURE" 
+            and set_visible_animation_can_apply(settings, x, context.scene))]:
+                try:
                     if hasattr(arm, "animation_data") and arm.animation_data != None:
-                        arm.animation_data.action = bpy.data.actions.get(action)
-                        print("[LeaderHelpers] Active action set to '{}'.".format(action))
+                        pass
                     else:
                         print("[LeaderHelpers] Created animation data for '{}'.".format(arm.name))
                         arm.animation_data_create()
+
+                    if action != "" and action != None:
                         arm.animation_data.action = bpy.data.actions.get(action)
-                        #print("[LeaderHelpers] [ERROR] Armature has no animation_data!")
+                        print("[LeaderHelpers] Active action set to '{}'.".format(action))
+                    else:
+                        arm.animation_data.action = None
+                        # Reset Pose
+                        # Source: https://blender.stackexchange.com/a/147342
+                        for pb in arm.pose.bones:
+                            pb.matrix_basis = Matrix()
+                        print("[LeaderHelpers] Reset pose for '{}'.".format(arm.name))
+                except: pass
     else:
         set_visible_animation_skip = False
 
