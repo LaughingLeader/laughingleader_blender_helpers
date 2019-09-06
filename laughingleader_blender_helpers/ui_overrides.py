@@ -39,13 +39,15 @@ def set_visible_animation(settings, context):
         action = settings.set_action
         if action != "":
             for arm in [x for x in context.scene.objects if (x.type == "ARMATURE" 
-                    and set_visible_animation_can_apply(settings, x, context.scene) 
-                        and hasattr(x, "animation_data"))]:
-                if hasattr(arm, "animation_data") and arm.animation_data != None:
-                    arm.animation_data.action = bpy.data.actions.get(action)
-                    print("[LeaderHelpers] Active action set to '{}'.".format(action))
-                else:
-                    print("[LeaderHelpers] [ERROR] Armature has no animation_data!")
+                and set_visible_animation_can_apply(settings, x, context.scene))]:
+                    if hasattr(arm, "animation_data") and arm.animation_data != None:
+                        arm.animation_data.action = bpy.data.actions.get(action)
+                        print("[LeaderHelpers] Active action set to '{}'.".format(action))
+                    else:
+                        print("[LeaderHelpers] Created animation data for '{}'.".format(arm.name))
+                        arm.animation_data_create()
+                        arm.animation_data.action = bpy.data.actions.get(action)
+                        #print("[LeaderHelpers] [ERROR] Armature has no animation_data!")
     else:
         set_visible_animation_skip = False
 
@@ -188,7 +190,7 @@ class LEADER_OT_timeline_anim_switch(Operator):
 
     @classmethod
     def poll(cls, context):
-        return True
+        return len(bpy.data.actions) > 0
 
     def execute(self, context):
         current_action = context.scene.leader_ui_misc_settings.set_action
@@ -202,7 +204,12 @@ class LEADER_OT_timeline_anim_switch(Operator):
             if index <= 0:
                 index = len(bpy.data.actions)
             index -= 1
-        next_action = bpy.data.actions[index]
+        
+        try:
+            next_action = bpy.data.actions[index]
+        except:
+            next_action = None
+ 
         if next_action is not None:
             context.scene.leader_ui_misc_settings.set_action = next_action.name
             print("[LeaderHelpers] Set visible armature action to [{}]'{}'.".format(index, next_action.name))
