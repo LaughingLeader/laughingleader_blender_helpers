@@ -179,9 +179,9 @@ class LLExportHelpers_ObjectExportPropertiesPanel(Panel):
         return (context.object is not None)
 
     def draw(self, context):
-        col = self.layout.row()
-        col.label(text="Debug")
-        col.operator(LLExportHelpers_AddonDebugOperator.bl_idname)
+        #col = self.layout.row()
+        #col.label(text="Debug")
+        #col.operator(LLExportHelpers_AddonDebugOperator.bl_idname)
 
         col = self.layout.column()
         col.label(text="Export Actions")

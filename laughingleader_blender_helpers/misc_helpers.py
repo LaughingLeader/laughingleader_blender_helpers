@@ -192,6 +192,112 @@ class LEADER_PT_view3d_tools_relations_armature_helpers(Panel):
         op = col.operator(LEADER_OT_view3d_set_armature_modifier.bl_idname, text=optext)
         op.use_replace_existing = use_replace_existing
 
+def removeEmptyGroups(obj, maxWeight = 0):
+    valid_groups = []
+    total_removed = 0
+
+    for v in obj.data.vertices:
+        for g in v.groups:
+            #print("[LeaderHelpers] Vertex group weight = '{}'".format(g.weight))
+            if g.weight > maxWeight:
+                if g not in valid_groups:
+                    valid_groups.append(obj.vertex_groups[g.group])
+
+    for r in obj.vertex_groups:
+        #print("[LeaderHelpers] Vertex Group [{}] Valid = '{}'".format(r.name, r in valid_groups))
+        if r not in valid_groups:
+            obj.vertex_groups.remove(r)
+            total_removed = total_removed + 1
+    return total_removed
+
+def removeZeroVerts(obj, maxWeight = 0):
+    total_removed = 0
+    for v in obj.data.vertices:
+        empty_groups = []
+        for g in v.groups:
+            if not g.weight > maxWeight:
+                empty_groups.append(g)
+        for x in empty_groups:
+            obj.vertex_groups[x.group].remove([v.index])
+            total_removed += 1
+    return total_removed
+
+class LEADER_OT_view3d_mesh_clear_emptyvertexgroups(Operator):
+    """Remove vertex groups whose total weight is 0"""
+    bl_label = "Clear Vertex Groups with Empty Weight"
+    bl_idname = "leader.view3d_mesh_clear_emptyvertexgroups"
+    bl_options = {"REGISTER", "UNDO"}
+
+    use_remove_empty_groups = BoolProperty(default=True)
+    use_remove_zero_verts = BoolProperty(default=False)
+
+    @classmethod
+    def poll(cls, context):
+        return (context.active_object is not None and context.active_object.type == "MESH"
+            and len(context.active_object.vertex_groups) > 0)
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        row.prop(self, "use_remove_empty_groups", text="Remove Empty Groups")
+        row = layout.row()
+        row.prop(self, "use_remove_zero_verts", text="Remove Zero Weight Vertices")
+    
+    def execute(self, context):
+        if self.use_remove_empty_groups == False and self.use_remove_zero_verts == False:
+            return {'CANCELLED'}
+
+        mesh = context.active_object
+        last_mode = None
+        if mesh.mode == 'EDIT':
+            last_mode = mesh.mode
+            bpy.ops.object.mode_set()
+
+        total_groups_removed = 0
+        total_verts_removed = 0
+
+        if self.use_remove_empty_groups:
+            total_groups_removed += removeEmptyGroups(mesh)
+
+        if self.use_remove_zero_verts:
+            total_verts_removed += removeZeroVerts(mesh)
+        
+        mesh.data.update()
+
+        if last_mode:
+            bpy.ops.object.mode_set(mode=last_mode)
+
+        message = "[LeaderHelpers] Removed '{}' vertex groups, '{}' empty vertices.".format(total_groups_removed, total_verts_removed)
+        print(message)
+        self.report({"INFO"}, message)
+
+        return {'FINISHED'}
+
+    def invoke(self, context, _event):
+        return self.execute(context)
+
+class LEADER_PT_view3d_tools_mesh_helpers(Panel):
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'TOOLS'
+    bl_category = "Helpers"
+    #bl_context = "objectmode"
+    bl_label = "Mesh Helpers"
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode in arm_valid_modes
+
+    def draw(self, context):
+
+        layout = self.layout
+        settings = getattr(context.scene, "leader_ui_misc_settings", None)
+
+        row = layout.row()
+        row.operator(LEADER_OT_view3d_mesh_clear_emptyvertexgroups.bl_idname)
+
+#class LEADER_PT_weightpaint_tools_mesh_helpers(LEADER_PT_view3d_tools_mesh_helpers):
+#    bl_space_type = 'WEIGHT_PAINT'
+
 class LEADER_OT_timeline_anim_switch(Operator):
     """Switch to the next/previous animation"""
     bl_label = ""
