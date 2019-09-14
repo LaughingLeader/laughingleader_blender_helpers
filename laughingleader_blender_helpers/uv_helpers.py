@@ -54,7 +54,15 @@ class LLUVHelpers_UnwrappedChecker(Operator):
         
         check1 = float(s1 * t2 - s2 * t1)
 
-        return abs(check1) < self.length_check_value
+        is_error = abs(check1) < self.length_check_value
+
+        if is_error:
+            print("[LeaderHelpers] Found problematic UV triangle. Total: {0:.10f} < {1:.10f} Min".format(abs(check1), self.length_check_value))
+            print("  UV1: x:{} y:{}".format(uv1[0], uv1[1]))
+            print("  UV2: x:{} y:{}".format(uv2[0], uv2[1]))
+            print("  UV3: x:{} y:{}".format(uv3[0], uv3[1]))
+
+        return is_error
 
     def uv_checkforerrors(self, context, node):
         if node.type == "MESH":
