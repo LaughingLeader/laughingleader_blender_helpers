@@ -2,9 +2,11 @@ from __future__ import division
 import bpy
 import bmesh
 import math
+import os.path
+import os
 
-from bpy.types import Operator, PropertyGroup
-from bpy.props import CollectionProperty, PointerProperty, BoolProperty, FloatProperty
+from bpy.types import Operator, PropertyGroup, Panel
+from bpy.props import CollectionProperty, PointerProperty, BoolProperty, FloatProperty, EnumProperty, StringProperty
 
 from bl_ui import space_image
 
@@ -23,6 +25,12 @@ bl_info = {
     "support": "COMMUNITY",
     "category": "UV"
 }
+
+def error_missing_layer_names(self, context):
+    self.layout.label("Layer Names are not enabled. Please enable the Layer Management or Leader Helpers addon for layer names.")
+
+def error_no_active_object(self, context):
+    self.layout.label("No active object set.")
 
 class LLUVHelpers_TriangleError:
     def __init__(self, face, vert1, vert2, vert3, uvloop1, uvloop2, uvloop3):
@@ -333,39 +341,21 @@ class LLUVHelpers_SelectSeamOperator(Operator):
 
         return {'FINISHED'}
 
-class LLUVHelpers_ImageReloaderOperator(Operator):
-    """Reloads all images from their source"""
-    bl_idname = "llhelpers.uv_reloadimages"
-    bl_label = "Reload All Images"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    def execute(self, context):
-        import os
-
-        updated_image = False
-        for image in context.blend_data.images:
-            if image.filepath != "":
-                path_check = bpy.path.abspath(image.filepath, library=image.library)
-                if os.path.exists(path_check):
-                    image.reload()
-                    print("[LL-UV-Helper] Reloaded image: \"{}\"".format(path_check))
-                    updated_image = True
-                else:
-                    print("[LL-UV-Helper] Skipped reloading image (file does not exist): \"{}\"".format(path_check))
-
-        if updated_image:
-            for area in bpy.context.screen.areas:
-                if area.type in ['IMAGE_EDITOR']:
-                    area.tag_redraw()
-
-        return {'FINISHED'}            # Lets Blender know the operator finished successfully.
-
-class UVHelperPanel(bpy.types.Panel):
-    bl_label = "Helpers"
-    bl_idname = "llhelpers.uv_helperpanel"
+class LEADER_PT_imageeditor_tools_uv_helpers(Panel):
+    bl_label = "UV Helpers"
     bl_space_type = 'IMAGE_EDITOR'
     bl_region_type = 'TOOLS'
     bl_category = 'Helpers'
+
+    expand_uv_errors = BoolProperty(
+        options={"HIDDEN"},
+        default=True
+    )
+
+    expand_image_helpers = BoolProperty(
+        options={"HIDDEN"},
+        default=False
+    )
 
     @classmethod
     def poll(cls, context):
@@ -392,7 +382,6 @@ class UVHelperPanel(bpy.types.Panel):
         layout.operator(LLUVHelpers_SelectCursorOperator.bl_idname)
         layout.operator(LLUVHelpers_SelectSeamOperator.bl_idname)
         layout.operator(LLUVHelpers_SelectSharpOperator.bl_idname)
-        layout.operator(LLUVHelpers_ImageReloaderOperator.bl_idname)
 
 class LLUVHelpers_DeleteOperator(Operator):
     """Delete this image data"""
@@ -434,6 +423,87 @@ class LLUVHelpers_DeleteOperator(Operator):
 
     def invoke(self, context, _event):
         return self.execute(context)
+class LLUVHelpers_ImageReloaderOperator(Operator):
+    """Reloads all images from their source"""
+    bl_idname = "llhelpers.uv_reloadimages"
+    bl_label = "Reload All Images"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        updated_image = False
+        for image in context.blend_data.images:
+            if image.filepath != "":
+                path_check = bpy.path.abspath(image.filepath, library=image.library)
+                if os.path.exists(path_check):
+                    image.reload()
+                    print("[LL-UV-Helper] Reloaded image: \"{}\"".format(path_check))
+                    updated_image = True
+                else:
+                    print("[LL-UV-Helper] Skipped reloading image (file does not exist): \"{}\"".format(path_check))
+
+        if updated_image:
+            for area in bpy.context.screen.areas:
+                if area.type in ['IMAGE_EDITOR']:
+                    area.tag_redraw()
+
+        return {'FINISHED'}            # Lets Blender know the operator finished successfully.
+
+
+class LEADER_OT_image_helpers_quickexport(Operator):
+    """Exports the current image quickly"""
+    bl_idname = "llhelpers.image_quickexportoperator"
+    bl_label = "Quick Export Image"
+    bl_options = {'REGISTER'}
+
+    filepath = StringProperty(
+        default=""
+    )
+
+    @classmethod
+    def poll(cls, context):
+        return context.space_data.image != None
+
+    def execute(self, context):
+        if self.filepath != "":
+            try:
+                bpy.ops.image.save_as(filepath=self.filepath)
+                self.report({"INFO"}, "[LeaderHelpers:ExportImage] Saved image to '{}'".format(self.filepath))
+            except Exception as e:
+                self.report({"ERROR"}, "[LL-UV-Helper:ExportImage] Error occured when exporting image.")
+                print("[LL-UV-Helper:ExportImage] Error occured when exporting image: {}.".format(e))
+            return {'FINISHED'}
+        else:
+            self.report({"WARNING"}, "[LL-UV-Helper:ExportImage] File path not set. Skipping")
+            return {'CANCELLED'}
+
+class LEADER_PT_imageeditor_tools_image_helpers(Panel):
+    bl_label = "Image Helpers"
+    bl_space_type = 'IMAGE_EDITOR'
+    bl_region_type = 'TOOLS'
+    bl_category = 'Helpers'
+
+    @classmethod
+    def poll(cls, context):
+        return context.space_data.image != None
+
+    def draw(self, context):
+        preferences = leader.get_preferences(context)
+        layout = self.layout
+
+        layout.operator(LLUVHelpers_ImageReloaderOperator.bl_idname)
+
+        layout.label("Export", icon="FILE_IMAGE")
+        box = layout.box()
+        if preferences is not None:
+            box.prop(preferences, "uvhelpers_images_quickexport_autoname")
+            box.prop(preferences, "uvhelpers_images_quickexport_manualname")
+            box.prop(preferences, "uvhelpers_images_quickexport_append")
+            box.label("Export To:", icon="EXPORT")
+            box.prop(preferences, "uvhelpers_images_quickexport_filepath", text="")
+            export_path = bpy.path.basename(preferences.uvhelpers_images_quickexport_filepath)
+            box.label(export_path)
+            op = box.operator(LEADER_OT_image_helpers_quickexport.bl_idname)
+            op.filepath = preferences.uvhelpers_images_quickexport_filepath
 
 # Draw Overrides
 

@@ -35,6 +35,9 @@ import bpy_extras.keyconfig_utils
 import traceback
 from bpy.app.handlers import persistent
 
+import os.path
+import os
+
 # load and reload submodules
 ##################################
 
@@ -127,6 +130,99 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
         description="The minimum length for UV triangles. Lengths less than this value will be selected as an error.\nThe final precision value is x/100000000",
         default=10,
         min=1
+    )
+
+    uvhelpers_images_quickexport_filepath = StringProperty(
+        name="Export Filepath",
+        description="The file path to export the image to",
+        default=""
+    )
+
+    uvhelpers_images_quickexport_last_filepath = StringProperty(
+        options={"HIDDEN"},
+        default=""
+    )
+
+    uvhelpers_images_quickexport_filename_ext = StringProperty(
+        name="File Extension",
+        options={"HIDDEN"},
+        default=".png"
+    )
+
+    uvhelpers_images_quickexport_directory = StringProperty(
+        name="Directory",
+        default="",
+        options={"HIDDEN"}
+    )
+
+    def images_quickexport_update_filepath(self, context):
+        fp = self.uvhelpers_images_quickexport_filepath
+        fp_last = self.uvhelpers_images_quickexport_last_filepath
+        fp_dir = self.uvhelpers_images_quickexport_directory
+        fp_auto = self.uvhelpers_images_quickexport_autoname
+        fp_manual = self.uvhelpers_images_quickexport_manualname
+        fp_append = self.uvhelpers_images_quickexport_append
+        ext = self.uvhelpers_images_quickexport_filename_ext
+        fp_result = ""
+
+        if fp != "" and fp_last == "":
+            self.uvhelpers_images_quickexport_last_filepath = fp
+
+        if fp_dir == "":
+            fp_dir = os.path.dirname(bpy.data.filepath)
+
+        if fp == "":
+            fp = "{}\\{}".format(fp_dir, str.replace(bpy.path.basename(bpy.data.filepath), ".blend", ""))
+
+        if fp != "":
+            if fp_manual != "":
+                fp = "{}\\{}".format(fp_dir, fp_manual)
+            else:
+                if fp_auto == "LAYER":
+                    if hasattr(bpy.data.scenes["Scene"], "namedlayers"):
+                        for i in range(20):
+                            if (bpy.data.scenes["Scene"].layers[i]):
+                                    layername = bpy.data.scenes["Scene"].namedlayers.layers[i].name
+                                    if layername is not None and layername != "":
+                                        fp = "{}\\{}".format(fp_dir, layername)
+                                        break
+                elif fp_auto == "OBJECT":
+                    obj_name = "object"
+                    if getattr(context.scene.objects, "active", None) is not None and hasattr(context.scene.objects.active, "name"):
+                        obj_name = context.scene.objects.active.name
+                    fp = "{}\\{}".format(fp_dir, obj_name)
+                    print("Obj name: {}".format(obj_name))
+                elif fp_auto == "DISABLED" and fp_last != "":
+                    fp = fp_last
+        fp = "{}_{}".format(fp, fp_append)
+        fp_result = bpy.path.ensure_ext(fp, ext)
+        print("Test: {} | {}".format(fp_dir, fp))
+        self.uvhelpers_images_quickexport_directory = fp_dir
+        self.uvhelpers_images_quickexport_filepath = fp_result
+        return
+
+    uvhelpers_images_quickexport_autoname = EnumProperty(
+        name="Auto-Name",
+        description="Auto-generate a filename based on a property name",
+        items=(("DISABLED", "Disabled", ""),
+               ("LAYER", "Layer Name", ""),
+               ("OBJECT", "Active Object Name", "")),
+        default=("LAYER"),
+        update=images_quickexport_update_filepath
+    )
+
+    uvhelpers_images_quickexport_manualname = StringProperty(
+        name="Manual Name",
+        description="The name to use when quick exporting (leave blank to disable)",
+        default="",
+        update=images_quickexport_update_filepath
+    )
+
+    uvhelpers_images_quickexport_append = StringProperty(
+        name="Append",
+        description="Append the text at the end of the file name",
+        default="",
+        update=images_quickexport_update_filepath
     )
 
     def draw(self, context):
