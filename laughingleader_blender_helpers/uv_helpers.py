@@ -455,26 +455,35 @@ class LEADER_OT_image_helpers_quickexport(Operator):
     bl_label = "Quick Export Image"
     bl_options = {'REGISTER'}
 
-    filepath = StringProperty(
-        default=""
-    )
-
     @classmethod
     def poll(cls, context):
         return context.space_data.image != None
 
     def execute(self, context):
-        if self.filepath != "":
-            try:
-                bpy.ops.image.save_as(filepath=self.filepath)
-                self.report({"INFO"}, "[LeaderHelpers:ExportImage] Saved image to '{}'".format(self.filepath))
-            except Exception as e:
-                self.report({"ERROR"}, "[LL-UV-Helper:ExportImage] Error occured when exporting image.")
-                print("[LL-UV-Helper:ExportImage] Error occured when exporting image: {}.".format(e))
-            return {'FINISHED'}
-        else:
-            self.report({"WARNING"}, "[LL-UV-Helper:ExportImage] File path not set. Skipping")
-            return {'CANCELLED'}
+        preferences = leader.get_scene_preferences(context)
+
+        if preferences is not None:
+            filepath = preferences.uvhelpers_images_quickexport_filepath
+            directory = preferences.uvhelpers_images_quickexport_directory
+            use_date = preferences.uvhelpers_images_quickexport_appenddate
+
+            if filepath != "":
+                try:
+                    if use_date:
+                        from datetime import datetime, timezone
+                        fp = os.path.splitext(filepath)[0]
+                        date =  datetime.fromtimestamp(datetime.now().timestamp()).strftime("%m-%d-%Y_%H-%M-%S")
+                        fp = "{}_{}.png".format(fp, date)
+                        filepath = fp
+                    bpy.ops.image.save_as(filepath=filepath)
+                    self.report({"INFO"}, "[LeaderHelpers:ExportImage] Saved image to '{}'".format(filepath))
+                except Exception as e:
+                    self.report({"ERROR"}, "[LL-UV-Helper:ExportImage] Error occured when exporting image.")
+                    print("[LL-UV-Helper:ExportImage] Error occured when exporting image: {}.".format(e))
+                return {'FINISHED'}
+            else:
+                self.report({"WARNING"}, "[LL-UV-Helper:ExportImage] File path not set. Skipping")
+                return {'CANCELLED'}
 
 class LEADER_PT_imageeditor_tools_image_helpers(Panel):
     bl_label = "Image Helpers"
@@ -487,7 +496,7 @@ class LEADER_PT_imageeditor_tools_image_helpers(Panel):
         return context.space_data.image != None
 
     def draw(self, context):
-        preferences = leader.get_preferences(context)
+        preferences = leader.get_scene_preferences(context)
         layout = self.layout
 
         layout.operator(LLUVHelpers_ImageReloaderOperator.bl_idname)
@@ -495,15 +504,16 @@ class LEADER_PT_imageeditor_tools_image_helpers(Panel):
         layout.label("Export", icon="FILE_IMAGE")
         box = layout.box()
         if preferences is not None:
+            box.prop(preferences, "uvhelpers_images_quickexport_directory")
             box.prop(preferences, "uvhelpers_images_quickexport_autoname")
             box.prop(preferences, "uvhelpers_images_quickexport_manualname")
             box.prop(preferences, "uvhelpers_images_quickexport_append")
+            box.prop(preferences, "uvhelpers_images_quickexport_appenddate")
             box.label("Export To:", icon="EXPORT")
             box.prop(preferences, "uvhelpers_images_quickexport_filepath", text="")
             export_path = bpy.path.basename(preferences.uvhelpers_images_quickexport_filepath)
-            box.label(export_path)
+            #box.label(export_path)
             op = box.operator(LEADER_OT_image_helpers_quickexport.bl_idname)
-            op.filepath = preferences.uvhelpers_images_quickexport_filepath
 
 # Draw Overrides
 

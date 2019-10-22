@@ -5,6 +5,9 @@ def get_preferences(context):
 		return context.user_preferences.addons["laughingleader_blender_helpers"].preferences
 	return None
 
+def get_scene_preferences(context):
+    return getattr(context.scene, "llhelpers_general", None)
+
 def is_visible(scene, obj, layers=True):
 	if layers:
 		if obj.hide == True:

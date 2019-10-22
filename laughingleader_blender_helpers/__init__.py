@@ -96,22 +96,7 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
         description="Auto-opens the console window on load, and enables other debug features",
         default=False
     )
-
-    from . import layer_manager
-
-    layer_manager_enabled = BoolProperty(default=True, name="Enable", description="Enable the Layer Manager", update=layer_manager.enabled_changed)
-    #layer_manager_default_showextras = BoolProperty(default=False, name="Show Extras by Default", description="Show the extra options for layers by default. This can be overwritten in the Layer Manager panel")
-    layer_manager_category = StringProperty(default="Layers", name="Panel Name", description="Display name to use for the Layer Manager Panel", update=layer_manager.update_panel)
-
-    viewport_shading_target = EnumProperty(
-        name="Toggle Viewport Shading Target",
-        description="The shading type to switch to when toggling the viewport shading",
-        items=shading_modes,
-        default=("MATERIAL")
-    )
-
-    viewport_shading_last = EnumProperty(default=("SOLID"), items=shading_modes, options={"HIDDEN"})
-
+    
     uvhelpers_errorchecker_select_all = BoolProperty(
             name="Select All Problems",
             description="Select all problematic UVs. If disabled, will only select the first problem found",
@@ -132,6 +117,61 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
         min=1
     )
 
+    from . import layer_manager
+
+    layer_manager_enabled = BoolProperty(default=True, name="Enable", description="Enable the Layer Manager", update=layer_manager.enabled_changed)
+    #layer_manager_default_showextras = BoolProperty(default=False, name="Show Extras by Default", description="Show the extra options for layers by default. This can be overwritten in the Layer Manager panel")
+    layer_manager_category = StringProperty(default="Layers", name="Panel Name", description="Display name to use for the Layer Manager Panel", update=layer_manager.update_panel)
+
+    viewport_shading_target = EnumProperty(
+        name="Toggle Viewport Shading Target",
+        description="The shading type to switch to when toggling the viewport shading",
+        items=shading_modes,
+        default=("MATERIAL")
+    )
+
+    viewport_shading_last = EnumProperty(default=("SOLID"), items=shading_modes, options={"HIDDEN"})
+
+    def draw(self, context):
+        #self.layout.template_list("LeaderPreferencesList", "", self, "preference_data", self, "index")
+
+        # for drawable in LeaderHelpersAddonPreferences.addon_preferences_list:
+        #     drawfunc = getattr(drawable, "draw", None)
+        #     if callable(drawfunc):
+        #         #drawfunc(drawable, context, self.layout)
+        #         self.layout.prop
+        layout = self.layout
+        layout.label("General")
+        box = layout.box()
+        box.prop(self, "general_enable_deletion")
+        layout.label("Layer Manager")
+        box = layout.box()
+        box.prop(self, "layer_manager_enabled")
+        box.prop(self, "layer_manager_category")
+        #box.prop(self, "layer_manager_default_showextras")
+        layout.prop(self, "viewport_shading_target")
+        layout.prop(self, "debug_mode")
+        return
+
+import posixpath
+import os.path
+
+_os_alt_seps = list(sep for sep in [os.path.sep, os.path.altsep] if sep not in (None, '/'))
+
+def safe_join(directory, filename):
+    # docstring omitted for brevity
+    filename = posixpath.normpath(filename)
+    for sep in _os_alt_seps:
+        if sep in filename:
+            pass
+        if os.path.isabs(filename) or \
+            filename == '..' or \
+            filename.startswith('../'):
+                pass
+    return os.path.join(directory, filename)
+
+class LeaderHelpers_GeneralSettings(PropertyGroup):
+
     uvhelpers_images_quickexport_filepath = StringProperty(
         name="Export Filepath",
         description="The file path to export the image to",
@@ -149,12 +189,6 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
         default=".png"
     )
 
-    uvhelpers_images_quickexport_directory = StringProperty(
-        name="Directory",
-        default="",
-        options={"HIDDEN"}
-    )
-
     def images_quickexport_update_filepath(self, context):
         fp = self.uvhelpers_images_quickexport_filepath
         fp_last = self.uvhelpers_images_quickexport_last_filepath
@@ -164,12 +198,17 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
         fp_append = self.uvhelpers_images_quickexport_append
         ext = self.uvhelpers_images_quickexport_filename_ext
         fp_result = ""
-
         if fp != "" and fp_last == "":
             self.uvhelpers_images_quickexport_last_filepath = fp
 
         if fp_dir == "":
             fp_dir = os.path.dirname(bpy.data.filepath)
+        else:
+            if os.path.isabs(fp_dir):
+                fp_dir = self.uvhelpers_images_quickexport_directory
+            else:
+                base_dir = bpy.path.abspath(os.path.dirname(bpy.data.filepath))
+                fp_dir = os.path.abspath(os.path.join(base_dir, self.uvhelpers_images_quickexport_directory))
 
         if fp == "":
             fp = "{}\\{}".format(fp_dir, str.replace(bpy.path.basename(bpy.data.filepath), ".blend", ""))
@@ -193,13 +232,30 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
                     fp = "{}\\{}".format(fp_dir, obj_name)
                     print("Obj name: {}".format(obj_name))
                 elif fp_auto == "DISABLED" and fp_last != "":
-                    fp = fp_last
-        fp = "{}_{}".format(fp, fp_append)
+                    fp = "{}\\{}".format(fp_dir, str.replace(bpy.path.basename(bpy.data.filepath), ".blend", ""))
+        if fp_append != "":
+            fp = "{}_{}".format(fp, fp_append)
+
         fp_result = bpy.path.ensure_ext(fp, ext)
-        print("Test: {} | {}".format(fp_dir, fp))
-        self.uvhelpers_images_quickexport_directory = fp_dir
+        print("Path: Dir {} | Path: {}".format(fp_dir, fp_result))
+
+        #self.uvhelpers_images_quickexport_directory = fp_dir
         self.uvhelpers_images_quickexport_filepath = fp_result
+        self.uvhelpers_images_quickexport_last_filepath = fp_result
         return
+    
+    uvhelpers_images_quickexport_directory = StringProperty(
+        name="Target Directory",
+        default="",
+        options={"HIDDEN"},
+        update=images_quickexport_update_filepath
+    )
+
+    uvhelpers_images_quickexport_appenddate = BoolProperty(
+        name="Append Date",
+        description="Append to current datetime to the file name when exporting",
+        default=False
+    )
 
     uvhelpers_images_quickexport_autoname = EnumProperty(
         name="Auto-Name",
@@ -219,32 +275,25 @@ class LeaderHelpersAddonPreferences(AddonPreferences):
     )
 
     uvhelpers_images_quickexport_append = StringProperty(
-        name="Append",
+        name="Append Text",
         description="Append the text at the end of the file name",
         default="",
         update=images_quickexport_update_filepath
     )
 
-    def draw(self, context):
-        #self.layout.template_list("LeaderPreferencesList", "", self, "preference_data", self, "index")
+    @classmethod
+    def register(cls):
+        bpy.types.Scene.llhelpers_general = PointerProperty(
+            name="General Settings",
+            description="",
+            type=cls
+        )
 
-        # for drawable in LeaderHelpersAddonPreferences.addon_preferences_list:
-        #     drawfunc = getattr(drawable, "draw", None)
-        #     if callable(drawfunc):
-        #         #drawfunc(drawable, context, self.layout)
-        #         self.layout.prop
-        layout = self.layout
-        layout.label("General")
-        box = layout.box()
-        box.prop(self, "general_enable_deletion")
-        layout.label("Layer Manager")
-        box = layout.box()
-        box.prop(self, "layer_manager_enabled")
-        box.prop(self, "layer_manager_category")
-        #box.prop(self, "layer_manager_default_showextras")
-        layout.prop(self, "viewport_shading_target")
-        layout.prop(self, "debug_mode")
-        return
+    @classmethod
+    def unregister(cls):
+        try:
+            del bpy.types.Scene.llhelpers_general
+        except: pass
 
 class LeaderToggleViewportShading(Operator):
     """Print the list of active addons to the debug window"""
