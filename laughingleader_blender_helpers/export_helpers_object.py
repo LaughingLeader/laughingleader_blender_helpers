@@ -74,7 +74,7 @@ class LLExportHelpers_ObjectExportProperties(PropertyGroup):
                 ("LOCSCALE", "Location/Scale", ""),
                 ("LOCROT", "Location/Rotation", ""),
                 ("ALL", "Location/Rotation/Scale", "")),
-            default=("DISABLED")
+            default=("ALL")
             )
         
         cls.locked = BoolProperty(
