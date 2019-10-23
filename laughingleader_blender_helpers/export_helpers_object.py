@@ -5,20 +5,6 @@ from bpy.props import StringProperty, BoolProperty, FloatProperty, EnumProperty,
 
 import addon_utils
 
-bl_info = {
-    "name": "Export Helpers",
-    "author": "LaughingLeader",
-    "blender": (2, 7, 9),
-    "api": -1,
-    "location": "Properties > Export Settings",
-    "description": ("Helpers for customizing file export"),
-    "warning": "",
-    "wiki_url": (""),
-    "tracker_url": "",
-    "support": "COMMUNITY",
-    "category": "Properties"
-}
-
 class LLExportHelpers_AddonDebugOperator(Operator):
     """Print the list of active addons to the debug window"""
     bl_idname = "llhelpers.export_addondebug"
