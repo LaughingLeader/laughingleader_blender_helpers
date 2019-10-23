@@ -347,16 +347,6 @@ class LEADER_PT_imageeditor_tools_uv_helpers(Panel):
     bl_region_type = 'TOOLS'
     bl_category = 'Helpers'
 
-    expand_uv_errors = BoolProperty(
-        options={"HIDDEN"},
-        default=True
-    )
-
-    expand_image_helpers = BoolProperty(
-        options={"HIDDEN"},
-        default=False
-    )
-
     @classmethod
     def poll(cls, context):
         return (context.object is not None)
@@ -454,10 +444,6 @@ class LEADER_OT_image_helpers_quickexport(Operator):
     bl_idname = "llhelpers.image_quickexportoperator"
     bl_label = "Quick Export Image"
     bl_options = {'REGISTER'}
-
-    @classmethod
-    def poll(cls, context):
-        return context.space_data.image != None
 
     def execute(self, context):
         preferences = leader.get_scene_preferences(context)
@@ -600,22 +586,21 @@ def IMAGE_HT_header_draw(self, context):
 def draw_snap_addon(self, context):
     self.layout.operator(LLUVHelpers_SelectCursorOperator.bl_idname, icon="PLUGIN")
 
-DOPESHEET_HT_header_draw_original = None
+IMAGE_HT_header_draw_original = None
 
 def register():
-    global DOPESHEET_HT_header_draw_original
-    DOPESHEET_HT_header_draw_original = bpy.types.IMAGE_HT_header.draw
+    global IMAGE_HT_header_draw_original
+    IMAGE_HT_header_draw_original = bpy.types.IMAGE_HT_header.draw
     bpy.types.IMAGE_HT_header.draw = IMAGE_HT_header_draw
-
     bpy.types.IMAGE_MT_uvs_snap.append(draw_snap_addon)
     return
 
 def unregister():
     try:
-        global DOPESHEET_HT_header_draw_original
-        if DOPESHEET_HT_header_draw_original is not None:
-            bpy.types.IMAGE_HT_header.draw = DOPESHEET_HT_header_draw_original
-            DOPESHEET_HT_header_draw_original = None
+        global IMAGE_HT_header_draw_original
+        if IMAGE_HT_header_draw_original is not None:
+            bpy.types.IMAGE_HT_header.draw = IMAGE_HT_header_draw_original
+            IMAGE_HT_header_draw_original = None
 
         bpy.types.IMAGE_MT_uvs_snap.remove(draw_snap_addon)
     except: pass
