@@ -3,8 +3,6 @@ LaughingLeader Helpers for Blender 2.79
 
 This is a set of helpers (packaged as one addon) that add additional functionality to Blender, all made with the intent to reduce tedious tasks.
 
-_Note: This addon is currently experimental, so don't expect absolute stability!_
-
 # Installing
 
 ## Manual Method  
