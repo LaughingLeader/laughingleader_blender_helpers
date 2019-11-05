@@ -254,8 +254,7 @@ class LEADER_OT_armature_helpers_apply_remap(Operator, ImportHelper):
         ("MUL", "Multiply", ""),
         ("DIV", "Divide", ""),
         ("DIF", "Difference", ""),
-        ("AVG", "Average", ""),
-        ),
+        ("AVG", "Average", "")),
         default="SET",
         description="How weights from vgroup B affect weights of vgroup A"
     )
@@ -264,8 +263,7 @@ class LEADER_OT_armature_helpers_apply_remap(Operator, ImportHelper):
         ("A", "A", ""),
         ("B", "B", ""),
         ("OR", "OR", ""),
-        ("AND", "AND", ""),
-        ),
+        ("AND", "AND", "")),
         default="A",
         description="Which vertices should be affected"
     )
@@ -327,8 +325,6 @@ class LEADER_OT_armature_helpers_apply_remap(Operator, ImportHelper):
                 print("[Remap] Removed vg '{}'".format(mvg_name))
         
             vg.name = output
-
-            
 
     @classmethod
     def poll(cls, context):
