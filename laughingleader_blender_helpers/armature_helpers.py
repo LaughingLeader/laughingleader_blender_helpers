@@ -244,7 +244,31 @@ class LEADER_OT_armature_helpers_apply_remap(Operator, ImportHelper):
 
     filter_glob = StringProperty( default='*.armmap;*.txt;*.tsv', options={'HIDDEN'} )
 
-    use_apply_all = BoolProperty(name="Apply Modifiers", default=True)    
+    use_rename_mode = BoolProperty(name="Rename Mode", default=True)
+    use_remove_empty = BoolProperty(name="Remove Empty Groups", default=True)
+    use_apply_all = BoolProperty(name="Apply Modifiers", default=True)
+    use_mix_set = EnumProperty(name="Mix Set", items=(
+        ("SET", "Replace", ""),
+        ("ADD", "Add", ""),
+        ("SUB", "Subtract", ""),
+        ("MUL", "Multiply", ""),
+        ("DIV", "Divide", ""),
+        ("DIF", "Difference", ""),
+        ("AVG", "Average", ""),
+        ),
+        default="SET",
+        description="How weights from vgroup B affect weights of vgroup A"
+    )
+    use_mix_mode = EnumProperty(name="Mix Mode", items=(
+        ("ALL", "All", ""),
+        ("A", "A", ""),
+        ("B", "B", ""),
+        ("OR", "OR", ""),
+        ("AND", "AND", ""),
+        ),
+        default="A",
+        description="Which vertices should be affected"
+    )
     #filepath = bpy.props.StringProperty(subtype="FILE_PATH", name="Armature Map",
     #   description="Display the parent-child structure of bones with indentation") 
 
@@ -263,6 +287,48 @@ class LEADER_OT_armature_helpers_apply_remap(Operator, ImportHelper):
         elif obj.type == "MESH":
             if not self.has_vertex_group(obj, group):
                 vg = obj.vertex_groups.new(group)
+
+    def group_has_weight(self, mesh, vg):
+        index = vg.index
+        for i, v in enumerate(mesh.data.vertices):
+            for g in v.groups:
+                if g.group == index:
+                    if g.weight > 0:
+                        return True
+        return False
+
+    def merge_same_output_groups(self, mesh, output, remap):
+        merge_groups = {}
+        for target,output in remap.items():
+            if any(x for x in remap.values() if x == output):
+                merge = merge_groups.get(output)
+                if merge == None:
+                   merge = []
+                   merge_groups[output] = merge
+                merge.append(target)
+        
+        for output,merge_list in merge_groups.items():
+            temp_name = "{}_-temp".format(output)
+            vg = mesh.vertex_groups.new(temp_name)
+            remove_list = []
+            for mvg_name in merge_list:
+                mvg = mesh.vertex_groups.get(mvg_name)
+                if mvg != None:
+                    print("[Remap] Merging vg '{}' into '{}'".format(mvg_name, temp_name))
+                    index = mvg.index
+                    for i, v in enumerate(mesh.data.vertices):
+                        for g in v.groups:
+                            if g.group == index and g.weight > 0:
+                                vg.add([v.index], g.weight, "ADD")
+                    remove_list.append(mvg)
+
+            for g in remove_list:
+                mesh.vertex_groups.remove(g)
+                print("[Remap] Removed vg '{}'".format(mvg_name))
+        
+            vg.name = output
+
+            
 
     @classmethod
     def poll(cls, context):
@@ -292,23 +358,42 @@ class LEADER_OT_armature_helpers_apply_remap(Operator, ImportHelper):
                     remap[target_bone] = output_bone
                     print("Remapping bone '{}' to '{}'".format(target_bone, output_bone))
         
+        if self.use_remove_empty:
+            meshes = (mesh for mesh in obj.children if mesh.type == "MESH")
+            for mesh in meshes:
+                for vg in mesh.vertex_groups:
+                    if not self.group_has_weight(mesh, vg):
+                        mesh.vertex_groups.remove(vg)
+                        print("[Remapping] Removed empty vertex group '{}' for mesh '{}'.".format(vg.name, mesh.name))
+
         for target, output in sorted(remap.items()):
             meshes = (mesh for mesh in obj.children if mesh.type == "MESH")
             for mesh in meshes:
                 if self.has_vertex_group(mesh, target):
-                    self.add_vertex_group(mesh, output)
-                    mod_name = "ReMap-{}-{}".format(target, output)
-                    mod = mesh.modifiers.new(mod_name, 'VERTEX_WEIGHT_MIX')
-                    print("[Remapping] Added VERTEX_WEIGHT_MIX modifier '{}' to '{}'.".format(mod_name, mesh.name))
-                    mod.vertex_group_a = output
-                    mod.vertex_group_b = target
-                    mod.mix_set = 'ALL'
-                    if self.use_apply_all:
-                        was_selected = mesh.select
-                        context.scene.objects.active = mesh
-                        mesh.select = True
-                        bpy.ops.object.modifier_apply(modifier = mod.name)
-                        mesh.select = was_selected
+                    if self.use_rename_mode == False:
+                        self.add_vertex_group(mesh, output)
+                        mod_name = "ReMap-{}-{}".format(target, output)
+                        mod = mesh.modifiers.new(mod_name, 'VERTEX_WEIGHT_MIX')
+                        print("[Remapping] Added VERTEX_WEIGHT_MIX modifier '{}' to '{}'.".format(mod_name, mesh.name))
+                        mod.vertex_group_a = output
+                        mod.vertex_group_b = target
+                        mod.mix_mode = self.use_mix_mode
+                        mod.mix_set = self.use_mix_set
+                        if self.use_apply_all:
+                            was_selected = mesh.select
+                            context.scene.objects.active = mesh
+                            mesh.select = True
+                            bpy.ops.object.modifier_apply(modifier = mod.name)
+                            mesh.select = was_selected
+                    else:
+                        self.merge_same_output_groups(mesh, output, remap)
+                        vg = next(iter(list(filter(lambda g: g.name == target, mesh.vertex_groups))), None)
+                        if vg != None:
+                            vg.name = output
+                            print("[Remapping] Renamed vertex group for mesh '{}': '{}' => '{}'. Skipping".format(mesh.name, target, output))
+                        else:
+                            #print("[Remapping] Failed to get vertex group '{}' mesh '{}'.".format(target, mesh.name))
+                            pass
                 else:
                     #print("[Remapping] Mesh '{}' doesn't have vertex group '{}'. Skipping".format(mesh.name, target))
                     pass
@@ -318,8 +403,20 @@ class LEADER_OT_armature_helpers_apply_remap(Operator, ImportHelper):
         self.report({"INFO"}, "Remapped {} bones.".format(len(remap)))
         return {'FINISHED'}
 
-    # def draw(self, context):
-    #     self.layout.prop(self, "filepath")
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        row.prop(self, "use_rename_mode")
+        row = layout.row()
+        row.prop(self, "use_remove_empty")
+        if self.use_rename_mode == False:
+            box = layout.row().box()
+            row = box.row()
+            row.prop(self, "use_mix_set")
+            row = layout.row()
+            row.prop(self, "use_mix_mode")
+            row = layout.row()
+            row.prop(self, "use_apply_all")
 
     # def invoke(self, context, _event):
     #     return self.execute(context)
