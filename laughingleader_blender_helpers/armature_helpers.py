@@ -302,7 +302,7 @@ class LEADER_OT_armature_helpers_apply_remap(Operator, ImportHelper):
                     print("[Remapping] Added VERTEX_WEIGHT_MIX modifier '{}' to '{}'.".format(mod_name, mesh.name))
                     mod.vertex_group_a = output
                     mod.vertex_group_b = target
-                    mod.mix_set = 'B'
+                    mod.mix_set = 'ALL'
                     if self.use_apply_all:
                         was_selected = mesh.select
                         context.scene.objects.active = mesh
