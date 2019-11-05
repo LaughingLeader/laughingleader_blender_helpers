@@ -9,7 +9,13 @@
 import bpy
 from bpy.types import Operator, AddonPreferences, PropertyGroup, UIList, Panel, Menu
 from bpy.props import StringProperty, BoolProperty, FloatProperty, EnumProperty, CollectionProperty, PointerProperty, IntProperty
+from bpy_extras.io_utils import ImportHelper
+
 from mathutils import Matrix
+
+import bpy.path
+import os
+import re
 
 from . import leader
 
@@ -155,6 +161,170 @@ class LEADER_OT_view3d_armature_toggle_mode(Operator):
     def invoke(self, context, _event):
         return self.execute(context)
 
+def has_armature_parent(obj):
+    if obj.type is "ARMATURE": return True
+    if obj.parent is not None:
+        return has_armature_parent(obj)
+    else:
+        return False
+
+def get_armature(obj):
+    if obj.type == "ARMATURE": 
+        return obj
+    elif obj.parent is not None:
+        return get_armature(obj.parent)
+    return None
+
+class LEADER_OT_armature_helpers_export_bones_info(Operator):
+    """Exports all bones to a the clipboard"""
+    bl_label = "Exports Bone Names to Clipboard"
+    bl_idname = "llhelpers.armature_exportbonesinfooperator"
+    bl_options = {"REGISTER", "UNDO"}
+
+    use_indent_children = BoolProperty(name="Indent Children", default=False, description="Display the parent-child structure of bones with indentation")
+    @classmethod
+    def poll(cls, context):
+        return True
+        obj = context.active_object
+        if obj is not None:
+             return has_armature_parent(obj)
+        return False
+
+    iterations = 0
+    max_iterations = 999
+    output = ""
+
+    def print_children(self, bone, indent):
+        #print("Bone({}) | Indents: {} | {}".format(bone.name, indent, self.max_iterations))
+        self.output += (indent*'  ') + bone.name + "\n"
+        if (len(bone.children) > 0):
+            for child in bone.children:
+                self.iterations += 1
+                if(self.iterations >= self.max_iterations):
+                    print("Hit recursion limit! {}/{}".format(self.iterations, self.max_iterations))
+                    break
+                self.print_children(child, (indent + 1))
+
+    def execute(self, context):
+        obj = context.active_object
+        data = obj.data
+        self.output = ""
+        if self.use_indent_children is False:
+            for bone in data.bones:
+                self.output += bone.name + "\n"
+        else:
+            bone_structure = {}
+            for bone in data.bones:
+                if len(bone.children) > 0:
+                    bone_structure[bone.name] = bone
+                #elif bone.parent is not None:
+                    #f not bone_structure.get(bone.parent.name):
+                        #bone_structure[bone.parent.name] = bone.parent
+            root_bone = next((x for x in bone_structure.values() if x.parent is None), None)
+            if root_bone is not None:
+                self.iterations = 0
+                self.print_children(root_bone, 1)
+        context.window_manager.clipboard = self.output
+        self.report({"INFO"}, "Copied {} bone names to clipboard.".format(len(data.bones)))
+        return {'FINISHED'}
+
+    def draw(self, context):
+        self.layout.prop(self, "use_indent_children")
+
+    def invoke(self, context, _event):
+        return self.execute(context)
+
+armmap_pattern = re.compile(r'^\s*?(\w.*)\t(.*)$', re.MULTILINE)
+
+class LEADER_OT_armature_helpers_apply_remap(Operator, ImportHelper):
+    """Apply an armature remap"""
+    bl_label = "Remap Weight Painting with Armature Map"
+    bl_idname = "llhelpers.armature_applyremapoperator"
+    bl_options = {"REGISTER", "UNDO"}
+
+    filter_glob = StringProperty( default='*.armmap;*.txt;*.tsv', options={'HIDDEN'} )
+
+    use_apply_all = BoolProperty(name="Apply Modifiers", default=True)    
+    #filepath = bpy.props.StringProperty(subtype="FILE_PATH", name="Armature Map",
+    #   description="Display the parent-child structure of bones with indentation") 
+
+    def has_bone_name(self, data, name):
+        return any(x.name == name for x in data.bones)
+
+    def has_vertex_group(self, obj, name):
+        return any(x.name == name for x in obj.vertex_groups)
+
+    def add_vertex_group(self, obj, group):
+        if obj.type == "ARMATURE":
+            meshes = (mesh for mesh in obj.children if mesh.type == "MESH")
+            for mesh in meshes:
+                if not self.has_vertex_group(mesh, group):
+                    vg = mesh.vertex_groups.new(group)
+        elif obj.type == "MESH":
+            if not self.has_vertex_group(obj, group):
+                vg = obj.vertex_groups.new(group)
+
+    @classmethod
+    def poll(cls, context):
+        return True
+        obj = context.active_object
+        if obj is not None:
+             return has_armature_parent(obj)
+        return False
+
+    def execute(self, context):
+        last_active = context.scene.objects.active
+        obj = get_armature(context.active_object)
+        if obj is None: return {'CANCELLED'}
+
+        data = obj.data
+        remap = {}
+
+        filename, extension = os.path.splitext(self.filepath)
+        armature_map_file = open(self.filepath, 'r')
+
+        for line in armature_map_file.readlines():
+            match = armmap_pattern.match(line)
+            if match:
+                target_bone = match.group(1)
+                output_bone = match.group(2)
+                if self.has_bone_name(data, output_bone):
+                    remap[target_bone] = output_bone
+                    print("Remapping bone '{}' to '{}'".format(target_bone, output_bone))
+        
+        for target, output in sorted(remap.items()):
+            meshes = (mesh for mesh in obj.children if mesh.type == "MESH")
+            for mesh in meshes:
+                if self.has_vertex_group(mesh, target):
+                    self.add_vertex_group(mesh, output)
+                    mod_name = "ReMap-{}-{}".format(target, output)
+                    mod = mesh.modifiers.new(mod_name, 'VERTEX_WEIGHT_MIX')
+                    print("[Remapping] Added VERTEX_WEIGHT_MIX modifier '{}' to '{}'.".format(mod_name, mesh.name))
+                    mod.vertex_group_a = output
+                    mod.vertex_group_b = target
+                    mod.mix_set = 'B'
+                    if self.use_apply_all:
+                        was_selected = mesh.select
+                        context.scene.objects.active = mesh
+                        mesh.select = True
+                        bpy.ops.object.modifier_apply(modifier = mod.name)
+                        mesh.select = was_selected
+                else:
+                    #print("[Remapping] Mesh '{}' doesn't have vertex group '{}'. Skipping".format(mesh.name, target))
+                    pass
+        
+        context.scene.objects.active = last_active
+
+        self.report({"INFO"}, "Remapped {} bones.".format(len(remap)))
+        return {'FINISHED'}
+
+    # def draw(self, context):
+    #     self.layout.prop(self, "filepath")
+
+    # def invoke(self, context, _event):
+    #     return self.execute(context)
+    #     return {'RUNNING_MODAL'} 
+
 arm_valid_modes = ["OBJECT", "POSE", "EDIT_ARMATURE", "EDIT_MESH", "PAINT_WEIGHT"]
 
 class LEADER_PT_view3d_tools_relations_armature_helpers(Panel):
@@ -191,6 +361,11 @@ class LEADER_PT_view3d_tools_relations_armature_helpers(Panel):
                     else "Set Armature Modifier to Active")
         op = col.operator(LEADER_OT_view3d_set_armature_modifier.bl_idname, text=optext)
         op.use_replace_existing = use_replace_existing
+
+        row = layout.row()
+        row.operator(LEADER_OT_armature_helpers_export_bones_info.bl_idname)
+        row = layout.row()
+        row.operator(LEADER_OT_armature_helpers_apply_remap.bl_idname)
 
 def removeEmptyGroups(obj, maxWeight = 0):
     valid_groups = []

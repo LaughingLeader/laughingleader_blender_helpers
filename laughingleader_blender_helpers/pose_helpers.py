@@ -116,6 +116,7 @@ def mirror_armature_init(scene):
 def render_pose_options(self, context):
     arm = context.active_object.data
     self.layout.prop(arm, "llpose_mirror_x_axis")
+    #self.layout.operator(LEADER_OT_pose_helpers_export_bones_info.bl_idname)
 
 def register():
     bpy.types.VIEW3D_PT_tools_posemode_options.append(render_pose_options)
