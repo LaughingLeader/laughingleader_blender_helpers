@@ -218,10 +218,10 @@ class LeaderHelpers_GeneralSettings(PropertyGroup):
                 fp = "{}\\{}".format(fp_dir, fp_manual)
             else:
                 if fp_auto == "LAYER":
-                    if hasattr(bpy.data.scenes["Scene"], "namedlayers"):
+                    if hasattr(context.scene, "namedlayers"):
                         for i in range(20):
-                            if (bpy.data.scenes["Scene"].layers[i]):
-                                    layername = bpy.data.scenes["Scene"].namedlayers.layers[i].name
+                            if (context.scene.layers[i]):
+                                    layername = context.scene.namedlayers.layers[i].name
                                     if layername is not None and layername != "":
                                         fp = "{}\\{}".format(fp_dir, layername)
                                         break
