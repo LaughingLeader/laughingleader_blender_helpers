@@ -54,12 +54,20 @@ def mirror_needed(bone, other_bone):
 def mirror_rotations(bone, other_bone):
     if other_bone.rotation_mode == bone.rotation_mode:
         if bone.rotation_mode == "QUATERNION":
-            other_bone.rotation_quaternion = bone.rotation_quaternion
+            other_bone.rotation_quaternion = bone.rotation_quaternion.inverted()
         elif bone.rotation_mode == "AXIS_ANGLE":
-            other_bone.rotation_axis_angle = bone.rotation_axis_angle
+            other_bone.rotation_axis_angle = bone.rotation_axis_angle.inverted()
         else:
-            other_bone.rotation_euler = bone.rotation_euler
+            other_bone.rotation_euler = bone.rotation_euler.inverted()
     return
+
+updating_scene = False
+
+def push_scene_update(scene):
+    global updating_scene
+    if not updating_scene:
+        updating_scene = True
+        scene.update()
 
 def mirror_bone(bone, obj, arm, scene):
     sideless_name = mirror_get_sideless_name(bone)
@@ -76,10 +84,11 @@ def mirror_bone(bone, obj, arm, scene):
             other_pose_bone = obj.pose.bones[reverse_name]
             if other_pose_bone is not None and mirror_needed(bone, other_pose_bone):
                 other_pose_bone.location = bone.location
+                other_pose_bone.location[2] = bone.location[2] * -1
                 mirror_rotations(bone, other_pose_bone)
                 other_pose_bone.scale = bone.scale
+                push_scene_update(scene)
                 #print("Mirroring bone: {} {}|{}".format(other_bone.name, pose.location, other_pose.location))
-                scene.update()
 
 def mirror_axis_scene(scene):
     if scene.objects.active is not None:
@@ -90,6 +99,9 @@ def mirror_axis_scene(scene):
                 #bone = arm.bones.active
                 for bone in bpy.context.selected_pose_bones:
                     mirror_bone(bone, obj, arm, scene)
+    
+    global updating_scene
+    updating_scene = False
 
 appended_update_func = False
 
