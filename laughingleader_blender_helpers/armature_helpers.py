@@ -244,7 +244,7 @@ class LEADER_OT_armature_helpers_apply_remap(Operator, ImportHelper):
 
     filter_glob = StringProperty( default='*.armmap;*.txt;*.tsv', options={'HIDDEN'} )
 
-    use_rename_mode = BoolProperty(name="Rename Mode", default=True, description="Rename bones in the armature, instead of making vertex group modifiers")
+    use_rename_mode = BoolProperty(name="Rename Mode", default=True, description="Rename vertex groups instead of making vertex group modifiers")
     use_remove_empty = BoolProperty(name="Remove Empty Groups", default=True, description="Remove empty vertex groups")
     use_apply_all = BoolProperty(name="Apply Modifiers", default=True, description="Apply all vertex group modifiers that get created")
     use_mix_set = EnumProperty(name="Mix Set", items=(
