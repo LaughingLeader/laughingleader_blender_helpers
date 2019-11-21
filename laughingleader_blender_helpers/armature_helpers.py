@@ -244,9 +244,9 @@ class LEADER_OT_armature_helpers_apply_remap(Operator, ImportHelper):
 
     filter_glob = StringProperty( default='*.armmap;*.txt;*.tsv', options={'HIDDEN'} )
 
-    use_rename_mode = BoolProperty(name="Rename Mode", default=True)
-    use_remove_empty = BoolProperty(name="Remove Empty Groups", default=True)
-    use_apply_all = BoolProperty(name="Apply Modifiers", default=True)
+    use_rename_mode = BoolProperty(name="Rename Mode", default=True, description="Rename bones in the armature, instead of making vertex group modifiers")
+    use_remove_empty = BoolProperty(name="Remove Empty Groups", default=True, description="Remove empty vertex groups")
+    use_apply_all = BoolProperty(name="Apply Modifiers", default=True, description="Apply all vertex group modifiers that get created")
     use_mix_set = EnumProperty(name="Mix Set", items=(
         ("SET", "Replace", ""),
         ("ADD", "Add", ""),
@@ -359,8 +359,9 @@ class LEADER_OT_armature_helpers_apply_remap(Operator, ImportHelper):
             for mesh in meshes:
                 for vg in mesh.vertex_groups:
                     if not self.group_has_weight(mesh, vg):
+                        vgName = vg.name
                         mesh.vertex_groups.remove(vg)
-                        print("[Remapping] Removed empty vertex group '{}' for mesh '{}'.".format(vg.name, mesh.name))
+                        print("[Remapping] Removed empty vertex group '{}' for mesh '{}'.".format(vgName, mesh.name))
 
         for target, output in sorted(remap.items()):
             meshes = (mesh for mesh in obj.children if mesh.type == "MESH")
