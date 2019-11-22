@@ -455,14 +455,18 @@ class LEADER_OT_image_helpers_quickexport(Operator):
 
             if filepath != "":
                 try:
-                    if use_date:
-                        from datetime import datetime, timezone
-                        fp = os.path.splitext(filepath)[0]
-                        date =  datetime.fromtimestamp(datetime.now().timestamp()).strftime("%m-%d-%Y_%H-%M-%S")
-                        fp = "{}_{}.png".format(fp, date)
-                        filepath = fp
-                    bpy.ops.image.save_as(filepath=filepath)
-                    self.report({"INFO"}, "[LeaderHelpers:ExportImage] Saved image to '{}'".format(filepath))
+                    img = getattr(context.space_data, "image", None)
+                    if img != None:
+                        if use_date:
+                            from datetime import datetime, timezone
+                            fp = os.path.splitext(filepath)[0]
+                            date =  datetime.fromtimestamp(datetime.now().timestamp()).strftime("%m-%d-%Y_%H-%M-%S")
+                            fp = "{}_{}.png".format(fp, date)
+                            filepath = fp
+                        context.scene.render.image_settings.file_format='PNG'
+                        img.save_render(filepath, context.scene)
+                        #bpy.ops.image.save_as(filepath=filepath, save_as_render=False, copy=False)
+                        self.report({"INFO"}, "[LeaderHelpers:ExportImage] Saved image to '{}'".format(filepath))
                 except Exception as e:
                     self.report({"ERROR"}, "[LL-UV-Helper:ExportImage] Error occured when exporting image.")
                     print("[LL-UV-Helper:ExportImage] Error occured when exporting image: {}.".format(e))
@@ -479,7 +483,10 @@ class LEADER_PT_imageeditor_tools_image_helpers(Panel):
 
     @classmethod
     def poll(cls, context):
-        return context.space_data.image != None
+        if context.space_data is not None:
+            img = getattr(context.space_data, "image", None)
+            return img is not None
+        return False
 
     def draw(self, context):
         preferences = leader.get_scene_preferences(context)
