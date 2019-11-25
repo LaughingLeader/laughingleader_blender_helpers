@@ -33,7 +33,8 @@ class LLExportHelpers_ObjectExportProperties(PropertyGroup):
             )
 
         def export_name_changed(self, context):
-            self.original_name = context.object.name
+            if context.object and hasattr(context.object, "name"):
+                self.original_name = context.object.name
             if self.export_name == "__DEFAULT__":
                 self.export_name = self.original_name
 
