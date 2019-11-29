@@ -79,10 +79,12 @@ class LLExportHelpers_ObjectExportProperties(PropertyGroup):
         layout.prop(self, "apply_transforms")
 
     def copy(self, target_props, lock=True):
-        if "export_name" in target_props:
-            self.export_name = target_props.export_name
-        if "apply_transforms" in target_props:
-            self.apply_transforms = target_props.apply_transforms
+        export_name = getattr(target_props, "export_name", None)
+        if export_name is not None:
+            self.export_name = export_name
+        apply_transforms = getattr(target_props, "apply_transforms", None)
+        if apply_transforms is not None:
+            self.apply_transforms = apply_transforms
         self.locked = lock
 
     def prepare(self, context, obj):
@@ -110,7 +112,7 @@ class LLExportHelpers_ObjectExportProperties(PropertyGroup):
             bpy.context.scene.objects.active = last_selected
             obj.select = False
             #print("Applied rotation: " + obj.name + " : " + str(obj.rotation_euler))
-
+    def prepare_name(self, context, obj):
         if self.export_name == "__DEFAULT__" and self.locked == False:
             obj["export_name"] = obj.name
         else:
