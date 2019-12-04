@@ -234,7 +234,7 @@ class LEADER_OT_armature_helpers_export_bones_info(Operator):
     def invoke(self, context, _event):
         return self.execute(context)
 
-armmap_pattern = re.compile(r'^\s*?(\w.*)\t(.*)$', re.MULTILINE)
+armmap_pattern = re.compile(r'^[\s\t]*?(\w.*)\t+(.*)$', re.MULTILINE)
 
 class LEADER_OT_armature_helpers_apply_remap(Operator, ImportHelper):
     """Apply an armature remap"""
