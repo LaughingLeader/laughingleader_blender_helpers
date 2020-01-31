@@ -419,6 +419,78 @@ class LEADER_OT_armature_helpers_apply_remap(Operator, ImportHelper):
     #     return self.execute(context)
     #     return {'RUNNING_MODAL'} 
 
+side_pattern = r"(.*?)(_+)(L|R)([_]\w*)?$"
+side_pattern2 = r"^(L|R)(_)(.*)$"
+
+class LEADER_OT_armature_helpers_swap_vertex_groups(Operator):
+    """Swap vertex group names between left and right, and vice versa"""
+    bl_label = "Swap Vertex Group Names"
+    bl_idname = "llhelpers.armature_swapvertexgroupsoperator"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None and context.active_object.type == "MESH"
+
+    def get_rename(self, vgroup, pattern, side_group_num, sub_pattern):
+        matches = re.finditer(pattern, vgroup.name, re.IGNORECASE)
+
+        for matchNum, match in enumerate(matches, start=1):
+            #print ("Match {matchNum} was found at {start}-{end}: {match}".format(matchNum = matchNum, start = match.start(), end = match.end(), match = match.group()))
+            side = match.group(side_group_num)
+            next_side = ""
+            if side == "L":
+                next_side = "R"
+            elif side == "l":
+                next_side = "r"
+            if side == "R":
+                next_side = "L"
+            elif side == "r":
+                next_side = "l"
+            if next_side != "":
+                subst = sub_pattern.format(next_side)
+                return re.sub(pattern, subst, vgroup.name, 1, re.IGNORECASE)
+            # for groupNum in range(0, len(match.groups())):
+            #     groupNum = groupNum + 1
+            #     print ("Group {groupNum} found at {start}-{end}: {group}".format(groupNum = groupNum, start = match.start(groupNum), end = match.end(groupNum), group = match.group(groupNum)))
+        return None 
+
+    def try_get_next_name(self, vgroup):
+        #subst = "\\1\\4" # Strip out underscores and side indicators (_L_, _R_, etc)
+        #result = re.sub(side_pattern, subst, group.name, 1, re.IGNORECASE)
+        result = self.get_rename(vgroup, side_pattern, 3, "\\1\\2{}\\4")
+        if result is None:
+            result = self.get_rename(vgroup, side_pattern2, 1, "{}\\2\\3")
+        return result
+
+    def execute(self, context):
+        obj = context.active_object
+        data = obj.data
+        name_remap = []
+        for group in obj.vertex_groups:
+            next_name = self.try_get_next_name(group)
+            if next_name is not None:
+                name_remap.append((group, next_name))
+
+        total_renamed = 0
+        
+        # Rename with a temp name so conflicts don't arise
+        for group,next_name in name_remap:
+            print("Renaming {} to {}".format(group.name, next_name))
+            group.name = "{}_Temp_Renaming".format(group.name)
+        for group,next_name in name_remap:
+            group.name = next_name
+            total_renamed = total_renamed + 1
+    
+        self.report({"INFO"}, "Renamed {} vertex groups.".format(total_renamed))
+        return {'FINISHED'}
+
+    def draw(self, context):
+        pass
+
+    def invoke(self, context, _event):
+        return self.execute(context)
+
 arm_valid_modes = ["OBJECT", "POSE", "EDIT_ARMATURE", "EDIT_MESH", "PAINT_WEIGHT"]
 
 class LEADER_PT_view3d_tools_relations_armature_helpers(Panel):
@@ -460,6 +532,8 @@ class LEADER_PT_view3d_tools_relations_armature_helpers(Panel):
         row.operator(LEADER_OT_armature_helpers_export_bones_info.bl_idname)
         row = layout.row()
         row.operator(LEADER_OT_armature_helpers_apply_remap.bl_idname)
+        row = layout.row()
+        row.operator(LEADER_OT_armature_helpers_swap_vertex_groups.bl_idname)
 
 def removeEmptyGroups(obj, maxWeight = 0):
     valid_groups = []
