@@ -46,30 +46,35 @@ class LEADER_operator_draw_objects(PropertyGroup):
                 except Exception as e:
                     print("Error drawing entry: {}".format(e.with_traceback()))
 
-class LEADER_PT_view3d_operator_settings(Panel):
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
-    bl_category = "Operators"
-    #bl_context = "objectmode"
-    bl_label = "Settings"
+# class LEADER_PT_view3d_operator_settings(Panel):
+#     bl_space_type = 'VIEW_3D'
+#     bl_region_type = 'TOOLS'
+#     bl_category = "Operators"
+#     #bl_context = "objectmode"
+#     bl_label = "Settings"
 
-    @classmethod
-    def poll(cls, context):
-        return True
+#     @classmethod
+#     def poll(cls, context):
+#         return getattr(context.scene, "leader_operator_settings", None) is not None
 
-    def draw(self, context):
-        layout = self.layout
-        context.scene.leader_operator_settings.draw(context, layout)
+#     def draw(self, context):
+#         layout = self.layout
+#         opsettings = getattr(context.scene, "leader_operator_settings", None)
+#         if opsettings is not None:
+#             try:
+#                 opsettings.draw(context, layout)
+#             except Exception as ex:
+#                 print("Error drawing operator settings: {}".format(ex.with_traceback()))
 
 def register():
-    pass
     # bpy.types.Scene.leader_operator_settings = PointerProperty(type=LEADER_operator_draw_objects, 
     #         name="LeaderHelpers Operator Draw Functions",
 	# 		options={"HIDDEN"}
     # )
+    pass
 
 def unregister():
-    try:
-        pass
-        #del bpy.types.Scene.leader_operator_settings
-    except: pass
+    # try:
+    #     del bpy.types.Scene.leader_operator_settings
+    # except: pass
+    pass
