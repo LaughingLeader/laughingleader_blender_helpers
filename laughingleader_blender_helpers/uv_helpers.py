@@ -449,9 +449,12 @@ class LEADER_OT_image_helpers_quickexport(Operator):
         preferences = leader.get_scene_preferences(context)
 
         if preferences is not None:
+            preferences.images_quickexport_update_filepath(context)
+            
             filepath = preferences.uvhelpers_images_quickexport_filepath
             directory = preferences.uvhelpers_images_quickexport_directory
             use_date = preferences.uvhelpers_images_quickexport_appenddate
+
 
             if filepath != "":
                 try:
