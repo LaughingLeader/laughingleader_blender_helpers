@@ -62,7 +62,7 @@ class LLExportHelpers_ObjectExportProperties(PropertyGroup):
                 ("LOCROT", "Location/Rotation", ""),
                 ("ALL", "Location/Rotation/Scale", "")),
             default=("ALL")
-            )
+        )
         
         cls.locked = BoolProperty(
             options={"HIDDEN"},

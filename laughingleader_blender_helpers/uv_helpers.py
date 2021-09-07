@@ -26,6 +26,8 @@ bl_info = {
     "category": "UV"
 }
 
+addon_keymaps = []
+
 def error_missing_layer_names(self, context):
     self.layout.label("Layer Names are not enabled. Please enable the Layer Management or Leader Helpers addon for layer names.")
 
@@ -46,7 +48,7 @@ class LLUVHelpers_UnwrappedChecker(Operator):
     """Check for UVs that will cause tangent/binormal issues.\nThese are UV faces that fail to form a mathematical triangle"""
     bl_idname = "llhelpers.uv_unwrappedchecker"
     bl_label = "Check UV Triangles"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER', 'UNDO', 'MACRO'}
 
     length_check_value = FloatProperty(default=0.0000001)
 
@@ -598,12 +600,31 @@ def draw_snap_addon(self, context):
 
 IMAGE_HT_header_draw_original = None
 
+def register_keymaps():
+    wm = bpy.context.window_manager
+
+    km = wm.keyconfigs.default.keymaps.new('Image', space_type='IMAGE_EDITOR', region_type='WINDOW', modal=False)
+    kmi = km.keymap_items.new(LLUVHelpers_UnwrappedChecker.bl_idname, type='NONE', value='PRESS')
+    addon_keymaps.append((km, kmi))
+
+    print("[LeaderHelpers:uv_helpers] Registered keybindings.")
+
+def unregister_keymaps():
+    try:
+        for km, kmi in addon_keymaps:
+            print("[LeaderHelpers:uv_helpers] Removed keybinding '{}'('{}').".format(kmi.idname, kmi.name))
+            km.keymap_items.remove(kmi)
+        #wm.keyconfigs.default.keymaps.remove(km)
+    except: pass
+    addon_keymaps.clear()
+    print("[LeaderHelpers:uv_helpers] Unregistered keybindings.")
+
 def register():
     global IMAGE_HT_header_draw_original
     IMAGE_HT_header_draw_original = bpy.types.IMAGE_HT_header.draw
     bpy.types.IMAGE_HT_header.draw = IMAGE_HT_header_draw
     bpy.types.IMAGE_MT_uvs_snap.append(draw_snap_addon)
-    return
+    register_keymaps()
 
 def unregister():
     try:
@@ -613,8 +634,8 @@ def unregister():
             IMAGE_HT_header_draw_original = None
 
         bpy.types.IMAGE_MT_uvs_snap.remove(draw_snap_addon)
+        unregister_keymaps()
     except: pass
-    return
 
 if __name__ == "__main__":
     register()
