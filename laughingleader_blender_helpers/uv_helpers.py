@@ -44,11 +44,11 @@ class LLUVHelpers_TriangleError:
         self.loop2 = uvloop2
         self.loop3 = uvloop3
 
-class LLUVHelpers_UnwrappedChecker(Operator):
+class LLUVHelpers_BadTriangleCheckerOperator(Operator):
     """Check for UVs that will cause tangent/binormal issues.\nThese are UV faces that fail to form a mathematical triangle"""
-    bl_idname = "llhelpers.uv_unwrappedchecker"
+    bl_idname = "uv.llhelpers_badtrianglechecker"
     bl_label = "Check UV Triangles"
-    bl_options = {'REGISTER', 'UNDO', 'MACRO'}
+    bl_options = {'REGISTER', 'UNDO'}
 
     length_check_value = FloatProperty(default=0.0000001)
 
@@ -160,13 +160,14 @@ class LLUVHelpers_UnwrappedChecker(Operator):
                                 break
 
                     self.report({"WARNING"}, "[LL-UV-Helper] {} total problems found on UV map. Check selected vertices for wrapping issues.".format(total_errors))
+                    bm.select_flush(True)
+                    bmesh.update_edit_mesh(mesh)
+                    return True
                 else:
                     self.report({"INFO"}, "[LL-UV-Helper] No UV problems found.")
-                
-                #total_errors.clear()
-
-                bm.select_flush(True)
-                bmesh.update_edit_mesh(mesh)
+                    bm.select_flush(True)
+                    bmesh.update_edit_mesh(mesh)
+        return False
 
     def execute(self, context):
         scene = context.scene
@@ -209,7 +210,7 @@ last_selection = None
 
 class LLUVHelpers_SelectCursorOperator(Operator):
     """Move the cursor to the last selected UV"""      # Use this as a tooltip for menu items and buttons.
-    bl_idname = "llhelpers.uv_3dcursortolastuv"        # Unique identifier for buttons and menu items to reference.
+    bl_idname = "uv.llhelpers_3dcursortolastuv"        # Unique identifier for buttons and menu items to reference.
     bl_label = "Cursor to Last UV"         # Display name in the interface.
     bl_options = {'REGISTER', 'UNDO'}  # Enable undo for the operator.
 
@@ -270,7 +271,7 @@ class LLUVHelpers_SelectCursorOperator(Operator):
 
 class LLUVHelpers_SelectSharpOperator(Operator):
     """Selects all seams"""
-    bl_idname = "llhelpers.uv_sharpselecter"
+    bl_idname = "uv.llhelpers_sharpselecter"
     bl_label = "Select Sharps Edges"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -306,7 +307,7 @@ class LLUVHelpers_SelectSharpOperator(Operator):
 
 class LLUVHelpers_SelectSeamOperator(Operator):
     """Selects all seams"""
-    bl_idname = "llhelpers.uv_seamselecter"
+    bl_idname = "uv.llhelpers_seamselecter"
     bl_label = "Select Seams"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -367,7 +368,7 @@ class LEADER_PT_imageeditor_tools_uv_helpers(Panel):
             box.label(length_check_value_str)
             box.prop(preferences, "uvhelpers_errorchecker_select_all")
             box.prop(preferences, "uvhelpers_errorchecker_select_mode")
-        uv_helper_op = box.operator(LLUVHelpers_UnwrappedChecker.bl_idname)
+        uv_helper_op = box.operator(LLUVHelpers_BadTriangleCheckerOperator.bl_idname)
         uv_helper_op.length_check_value = length_check_value
 
         layout.label("Misc")
@@ -378,7 +379,7 @@ class LEADER_PT_imageeditor_tools_uv_helpers(Panel):
 class LLUVHelpers_DeleteOperator(Operator):
     """Delete this image data"""
     bl_label = "Delete Image"
-    bl_idname = "llhelpers.uv_imagedelete"
+    bl_idname = "image.llhelpers_imagedelete"
     bl_options = {"UNDO"}
 
     @classmethod
@@ -417,7 +418,7 @@ class LLUVHelpers_DeleteOperator(Operator):
         return self.execute(context)
 class LLUVHelpers_ImageReloaderOperator(Operator):
     """Reloads all images from their source"""
-    bl_idname = "llhelpers.uv_reloadimages"
+    bl_idname = "image.llhelpers_reloadimages"
     bl_label = "Reload All Images"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -443,7 +444,7 @@ class LLUVHelpers_ImageReloaderOperator(Operator):
 
 class LEADER_OT_image_helpers_quickexport(Operator):
     """Exports the current image quickly"""
-    bl_idname = "llhelpers.image_quickexportoperator"
+    bl_idname = "image.llhelpers_quickexportoperator"
     bl_label = "Quick Export Image"
     bl_options = {'REGISTER'}
 
@@ -604,8 +605,10 @@ def register_keymaps():
     wm = bpy.context.window_manager
 
     km = wm.keyconfigs.default.keymaps.new('Image', space_type='IMAGE_EDITOR', region_type='WINDOW', modal=False)
-    kmi = km.keymap_items.new(LLUVHelpers_UnwrappedChecker.bl_idname, type='NONE', value='PRESS')
-    addon_keymaps.append((km, kmi))
+    addon_keymaps.append((km, km.keymap_items.new(LLUVHelpers_BadTriangleCheckerOperator.bl_idname, type='NONE', value='PRESS')))
+    addon_keymaps.append((km, km.keymap_items.new(LLUVHelpers_SelectSeamOperator.bl_idname, type='NONE', value='PRESS')))
+    addon_keymaps.append((km, km.keymap_items.new(LLUVHelpers_SelectSharpOperator.bl_idname, type='NONE', value='PRESS')))
+    addon_keymaps.append((km, km.keymap_items.new(LLUVHelpers_SelectCursorOperator.bl_idname, type='NONE', value='PRESS')))
 
     print("[LeaderHelpers:uv_helpers] Registered keybindings.")
 
